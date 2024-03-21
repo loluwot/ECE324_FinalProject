@@ -86,7 +86,7 @@ def train(cfg):
         num_workers=cfg.num_workers,
     )
                                         
-    model = LitModel(config=dict(cfg))
+    model = LitModel(config=cfg)
     
     callbacks = [ModelSummary(max_depth=2)]
 

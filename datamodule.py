@@ -18,8 +18,6 @@ def normalize(im):
     im /= stds[..., None, None]
     return im
     
-BASE_SIZE = 512
-
 class AFHQDataset(Dataset):
     def __init__(self, path, im_size=512, use_normalize=False):
         super().__init__()
