@@ -8,16 +8,26 @@ import cv2
 from pathlib import Path
 import lightning.pytorch as pl
 
+means = [0.5022, 0.4599, 0.3994]
+stds = [0.2554, 0.2457, 0.2504]
 
 def normalize(im):
     # means = torch.tensor([0.5022, 0.4599, 0.3994])
     # stds = torch.tensor([0.2554, 0.2457, 0.2504])
-    means = np.array([0.5022, 0.4599, 0.3994])
-    stds = np.array([0.2554, 0.2457, 0.2504])
+    means = np.array(means)
+    stds = np.array(stds)
     im -= means[..., None, None]
     im /= stds[..., None, None]
     return im
     
+def unnormalize(im, tensor=False):
+    f = (lambda x: torch.tensor(x).to(im)) if tensor else np.array
+    means = f(means)
+    stds = f(stds)
+    im *= stds[..., None, None]
+    im += means[..., None, None]
+    return im
+
 class AFHQDataset(Dataset):
     def __init__(self, path, im_size=512, use_normalize=False):
         super().__init__()

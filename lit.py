@@ -9,6 +9,10 @@ from pydantic import BaseModel
 from modules import ACAI
 
 from typing import List, Union
+from torchvision.utils import make_grid
+from datamodule import unnormalize
+
+import wandb
 
 class LitModelCfg(BaseModel):
     
@@ -25,8 +29,8 @@ class LitModelCfg(BaseModel):
     critic_psize : int = 7
     critic_hidden : int = 4096
 
-    autoenc_lambda : float = 0.
-    critic_gamma : float = 1.
+    autoenc_lambda : float = 0.5
+    critic_gamma : float = 0.2
     
 
 class LitModel(pl.LightningModule):
@@ -66,3 +70,12 @@ class LitModel(pl.LightningModule):
 
         self.log_dict({"autoenc_loss": loss, "critic_loss": c_loss}, prog_bar=True)
 
+        print(batch_idx)
+
+
+    @torch.no_grad()
+    def _visualize_results(self, x_b, y_b):
+        samples = x_b[[0]], y_b[[0]]
+        results = self.model.autoenc(*samples, 0.5)
+        image_grid = make_grid([unnormalize(x, tensor=True) for x in [samples[0][0], results[0], samples[1][0]]], nrow=3)
+        wandb.log({'result':wandb.Image(image_grid)})
