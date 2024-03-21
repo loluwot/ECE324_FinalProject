@@ -25,11 +25,9 @@ def make_layers(cfg, batch_norm: bool = False, invert=False):
             if batch_norm:
                 layers += [conv2d, nn.BatchNorm2d(v), nn.ReLU(inplace=True)]
             else:
-                layers += [conv2d]
-                if i != len(cfg) - 2:
-                    layers += [nn.ReLU(inplace=True)] 
+                layers += [conv2d, nn.ReLU(inplace=True)] 
             in_channels = v
-    return nn.Sequential(*layers)
+    return nn.Sequential(*layers[:-1])
 
 class Autoencoder(nn.Module):
     def __init__(self, cfg):
@@ -72,7 +70,7 @@ class ACAI(nn.Module):
         alpha = torch.rand(bs, dtype=x.dtype, device=x.device)[(slice(None, None),) + (None,)*(x.ndim - 1)]
         autoenc_y = self.autoenc(x, y, torch.zeros_like(alpha))
 
-        print(autoenc_y[0, 0, 0], y[0, 0, 0])
+        print(autoenc_y[0, 0, 0, :10], y[0, 0, 0, :10])
 
         loss = F.mse_loss(autoenc_y, y)
 
