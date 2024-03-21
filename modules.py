@@ -47,7 +47,7 @@ class Critic(nn.Module):
             make_layers(cfg.critic),
             nn.AdaptiveAvgPool2d((cfg.critic_psize, cfg.critic_psize)),
             nn.Flatten(),
-            nn.Linear(cfg.critic[-1] * cfg.critic_psize ** 2, cfg.critic_hidden),
+            nn.Linear(int(cfg.critic[-1]) * cfg.critic_psize ** 2, cfg.critic_hidden),
             nn.ReLU(True),
             nn.Dropout(p=cfg.critic_dropout),
             nn.Linear(cfg.critic_hidden, cfg.critic_hidden),
