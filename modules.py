@@ -15,11 +15,12 @@ def make_layers(cfg, batch_norm: bool = False, invert=False):
     pool_l = lambda : nn.MaxPool2d(kernel_size=2, stride=2) if not invert else nn.UpsamplingNearest2d(scale_factor=2)
     cfg = cfg[::1 - 2*invert]
 
-    in_channels = cfg[0]
+    in_channels = int(cfg[0])
     for v in cfg:
         if v == "M":
             layers += [pool_l()]
         else:
+            v = int(v)
             conv2d = nn.Conv2d(in_channels, v, kernel_size=3, padding=1)
             if batch_norm:
                 layers += [conv2d, nn.BatchNorm2d(v), nn.ReLU(inplace=True)]
