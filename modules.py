@@ -38,6 +38,8 @@ class Autoencoder(nn.Module):
         self.encoder = make_layers(cfg.autoenc)
         self.decoder = make_layers(cfg.autoenc, invert=True)
 
+        print(self.decoder)
+
     def forward(self, x, y, alpha=0.):
         return self.decoder(alpha * self.encoder(x) + (1 - alpha)*self.encoder(y))
     
