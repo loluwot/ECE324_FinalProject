@@ -8,6 +8,8 @@ import cv2
 from pathlib import Path
 import lightning.pytorch as pl
 
+import random
+
 MEANS = [0.5022, 0.4599, 0.3994]
 STDS = [0.2554, 0.2457, 0.2504]
 
@@ -56,4 +58,5 @@ class AFHQDataModule(pl.LightningDataModule):
             batch_size = self.batch_size,
             num_workers = self.num_workers,
             pin_memory = True,
+            shuffle=True
         )
