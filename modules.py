@@ -31,6 +31,7 @@ def make_layers(cfg, batch_norm: bool = False, invert=False):
 class Autoencoder(nn.Module):
     def __init__(self, cfg):
         super().__init__()
+        print(cfg.autoenc)
         self.encoder = make_layers(cfg.autoenc)
         self.decoder = make_layers(cfg.autoenc, invert=True)
 
