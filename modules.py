@@ -41,8 +41,8 @@ class Autoencoder(nn.Module):
         print(self.decoder)
 
     def forward(self, x, y, alpha=0.):
-        # return self.decoder(alpha * self.encoder(x) + (1 - alpha)*self.encoder(y))
-        return self.decoder(self.encoder(y))
+        return self.decoder(alpha * self.encoder(x) + (1 - alpha)*self.encoder(y))
+        # return self.decoder(self.encoder(y))
     
 class Critic(nn.Module):
     def __init__(self, cfg):
@@ -75,11 +75,7 @@ class ACAI(nn.Module):
         bs = x.shape[0]
         alpha = torch.rand(bs, dtype=x.dtype, device=x.device)[(slice(None, None),) + (None,)*(x.ndim - 1)]
         autoenc_y = self.autoenc(x, y, torch.zeros_like(alpha))
-
-        print(autoenc_y[0, 0, 0, :10], y[0, 0, 0, :10])
-
         loss = F.mse_loss(autoenc_y, y)
-
         res = self.autoenc(x, y, alpha)
         loss += self.cfg.autoenc_lambda * self.critic(res).square().sum()
         return loss, alpha, res, autoenc_y
