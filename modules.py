@@ -38,7 +38,6 @@ class Autoencoder(nn.Module):
         self.decoder = make_layers(cfg.autoenc, invert=True)
 
     def forward(self, x, y, alpha=0.):
-        print(alpha.shape)
         return self.decoder(alpha * self.encoder(x) + (1 - alpha)*self.encoder(y))
     
 class Critic(nn.Module):
@@ -67,10 +66,10 @@ class ACAI(nn.Module):
         self.autoenc = Autoencoder(cfg)
         self.critic = Critic(cfg)
         self.cfg = cfg
+        print(self.autoenc)
 
     def forward_autoenc(self, x, y):
         bs = x.shape[0]
-        print('BATCH SIZE', bs)
         alpha = torch.rand(bs, dtype=x.dtype, device=x.device)[(slice(None, None),) + (None,)*(x.ndim - 1)]
         res = self.autoenc(x, y, alpha)
         autoenc_y = self.autoenc(x, y, torch.zeros_like(alpha))
