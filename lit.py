@@ -8,6 +8,8 @@ from pydantic import BaseModel
 
 from modules import ACAI
 
+from typing import List, Union
+
 class LitModelCfg(BaseModel):
     
     ##### TRAINING PARAMS
@@ -61,4 +63,3 @@ class LitModel(pl.LightningModule):
 
         self.log_dict({"autoenc_loss": loss, "critic_loss": c_loss}, prog_bar=True)
 
-    
