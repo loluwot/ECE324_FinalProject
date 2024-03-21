@@ -72,7 +72,7 @@ class ACAI(nn.Module):
         alpha = torch.rand(bs, dtype=x.dtype, device=x.device)[(slice(None, None),) + (None,)*(x.ndim - 1)]
         autoenc_y = self.autoenc(x, y, torch.zeros_like(alpha))
 
-        print(autoenc_y, y)
+        print(autoenc_y[0, 0, 0, 0], y[0, 0, 0, 0])
 
         loss = F.mse_loss(autoenc_y, y)
 
