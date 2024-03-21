@@ -58,7 +58,6 @@ class LitModel(pl.LightningModule):
         x_b, y_b = torch.tensor_split(batch.to(torch.float32), 2)
 
         loss, alpha, res, autoenc_y = self.model.forward_autoenc(x_b, y_b)
-        
         a_opt.zero_grad()
         self.manual_backward(loss)
         a_opt.step()

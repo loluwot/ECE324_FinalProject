@@ -66,15 +66,15 @@ class ACAI(nn.Module):
         self.autoenc = Autoencoder(cfg)
         self.critic = Critic(cfg)
         self.cfg = cfg
-        print(self.autoenc)
 
     def forward_autoenc(self, x, y):
         bs = x.shape[0]
         alpha = torch.rand(bs, dtype=x.dtype, device=x.device)[(slice(None, None),) + (None,)*(x.ndim - 1)]
-        res = self.autoenc(x, y, alpha)
         autoenc_y = self.autoenc(x, y, torch.zeros_like(alpha))
         loss = F.mse_loss(autoenc_y, y)
-        loss += self.cfg.autoenc_lambda * self.critic(res).square().sum()
+
+        res = self.autoenc(x, y, alpha)
+        # loss += self.cfg.autoenc_lambda * self.critic(res).square().sum()
         return loss, alpha, res, autoenc_y
 
     def forward_critic(self, x, y, res, alpha, autoenc_y):
