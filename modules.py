@@ -77,7 +77,7 @@ class ACAI(nn.Module):
         return loss, alpha, res, autoenc_y
 
     def forward_critic(self, x, y, res, alpha, autoenc_y):
-        return F.mse_loss(self.critic(res.detach()), alpha) + self.critic(self.cfg.critic_gamma * y + (1 - self.cfg.critic_gamma) * autoenc_y.detach()).square().sum()
+        return F.mse_loss(self.critic(res.detach()).squeeze(), alpha.squeeze()) + self.critic(self.cfg.critic_gamma * y + (1 - self.cfg.critic_gamma) * autoenc_y.detach()).square().sum()
    
 
 
