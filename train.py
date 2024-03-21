@@ -9,6 +9,7 @@ torch.set_float32_matmul_precision('medium')
 from datamodule import AFHQDataModule, AFHQDataset
 from typing import List, Optional
 
+import pathlib
 from pathlib import Path
 import pydantic_cli
 
