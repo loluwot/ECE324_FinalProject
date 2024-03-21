@@ -45,11 +45,12 @@ class AFHQDataset(Dataset):
         return self.normalize(cv2.resize(cv2.imread(str(self.image_filenames[idx].resolve()), cv2.IMREAD_COLOR), (self.im_size, self.im_size), interpolation=cv2.INTER_AREA)[..., ::-1].transpose(-1, 0, 1) / 255)
 
 class AFHQDataModule(pl.LightningDataModule):
-    def __init__(self, base_dataset, num_workers=1, batch_size=32):
+    def __init__(self, base_dataset, num_workers=1, batch_size=32, shuffle=True):
         super().__init__()
         self.base_dataset = base_dataset
         self.num_workers = num_workers
         self.batch_size = batch_size
+        self.shuffle = shuffle
         
     def train_dataloader(self):
         return DataLoader(
@@ -57,5 +58,5 @@ class AFHQDataModule(pl.LightningDataModule):
             batch_size = self.batch_size,
             num_workers = self.num_workers,
             pin_memory = True,
-            shuffle=True
+            shuffle= self.shuffle
         )

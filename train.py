@@ -61,7 +61,7 @@ class TrainConfig(LitModelCfg):
     ##### VIS #######
     visualize_n_batches : int = 1
     check_samples_every_n_epochs : int = 10
-    
+
     class Config(pydantic_cli.DefaultConfig):
         extra = "forbid"
         CLI_BOOL_PREFIX = ("--enable_", "--disable_")
@@ -88,6 +88,7 @@ def train(cfg):
         base_dataset, 
         batch_size=cfg.batch_size,
         num_workers=cfg.num_workers,
+        shuffle = not cfg.debug_single
     )
                                         
     model = LitModel(config=cfg)
