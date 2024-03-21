@@ -20,7 +20,6 @@ def make_layers(cfg, batch_norm: bool = False, invert=False):
         if v == "M":
             layers += [pool_l()]
         else:
-            v = int(v)
             conv2d = nn.Conv2d(in_channels, v, kernel_size=3, padding=1)
             if batch_norm:
                 layers += [conv2d, nn.BatchNorm2d(v), nn.ReLU(inplace=True)]
