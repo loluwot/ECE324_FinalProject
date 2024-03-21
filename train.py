@@ -10,6 +10,7 @@ from datamodule import AFHQDataModule, AFHQDataset
 from typing import List, Optional
 
 from pathlib import Path
+import pydantic_cli
 
 
 class TrainConfig(LitModelCfg):
