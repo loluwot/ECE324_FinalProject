@@ -7,7 +7,9 @@ import torch
 torch.set_float32_matmul_precision('medium')
 
 from datamodule import AFHQDataModule, AFHQDataset
+from typing import List, Optional
 
+from pathlib import Path
 
 
 class TrainConfig(LitModelCfg):
