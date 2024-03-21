@@ -22,7 +22,7 @@ class LitModelCfg(BaseModel):
 
     ##### ARCHITECTURE
     
-    autoenc: List[Union[str, int]] = [3, 64, 64, "M", 128, 128, "M", 256, 256, "M", 512, 512]
+    autoenc: List[Union[str, int]] = [3, 64, 64, "M", 128, 128, "M", 256, 256, 256, 256, "M", 512]
     critic: List[Union[str, int]] = [3, 64, 64, "M", 128, 128, "M", 256, 256, 256, 256, "M", 512, 512, 512, 512, "M", 512, 512, 512, 512]
     critic_dropout : float = 0.1
     critic_act : bool = False
