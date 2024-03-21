@@ -52,7 +52,7 @@ class Critic(nn.Module):
             nn.Dropout(p=cfg.critic_dropout),
             nn.Linear(cfg.critic_hidden, cfg.critic_hidden),
             nn.ReLU(True),
-            nn.Dropout(p=dropout),
+            nn.Dropout(p=cfg.critic_dropout),
             nn.Linear(cfg.critic_hidden, 1),
         )
         self.act = nn.Identity() if cfg.critic_act is False else nn.Sigmoid()
