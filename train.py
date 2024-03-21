@@ -147,3 +147,17 @@ def train(cfg):
     trainer.fit(model=model, datamodule=datamodule, ckpt_path=ckpt_path)
 
     return 0
+
+if __name__ == "__main__":
+    
+    # from argparse import ArgumentParser
+    # parser = ArgumentParser()
+    # parser.add_argument('config', type=str)
+
+    # args = parser.parse_args()
+    # config_raw = (f := open(args.config)).read()
+    # cfg = pydantic_yaml.parse_yaml_raw_as(TrainConfig, config_raw)
+    
+    # train(cfg)
+    pydantic_cli.run_and_exit(TrainConfig, train)
+
