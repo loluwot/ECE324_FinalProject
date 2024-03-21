@@ -13,6 +13,8 @@ import pathlib
 from pathlib import Path
 import pydantic_cli
 
+import uuid
+
 
 class TrainConfig(LitModelCfg):
 
