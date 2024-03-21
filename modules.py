@@ -32,12 +32,10 @@ def make_layers(cfg, batch_norm: bool = False, invert=False):
 class Autoencoder(nn.Module):
     def __init__(self, cfg):
         super().__init__()
-        print(cfg.autoenc)
         self.encoder = make_layers(cfg.autoenc)
         self.decoder = make_layers(cfg.autoenc, invert=True)
 
     def forward(self, x, y, alpha=0.):
-        alpha = 0.5 - abs(0.5 - alpha)
         return self.decoder(alpha * self.encoder(x) + (1 - alpha)*self.encoder(y))
     
 class Critic(nn.Module):
