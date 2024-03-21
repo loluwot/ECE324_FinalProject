@@ -80,7 +80,7 @@ def train(cfg):
         use_normalize = cfg.normalize
     )
 
-    datamodule = ChallengeDataModule(
+    datamodule = AFHQDataModule(
         base_dataset, 
         batch_size=cfg.batch_size,
         num_workers=cfg.num_workers,
