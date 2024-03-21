@@ -48,7 +48,7 @@ class LitModel(pl.LightningModule):
     
     def training_step(self, batch, batch_idx):
         a_opt, c_opt = self.optimizers()
-        x_b, y_b = torch.split(batch, 2)
+        x_b, y_b = torch.tensor_split(batch, 2)
 
         loss, alpha, res, autoenc_y = self.model.forward_autoenc(x_b, y_b)
         
