@@ -27,7 +27,10 @@ def make_layers(cfg, batch_norm: bool = False, invert=False):
             else:
                 layers += [conv2d, nn.ReLU(inplace=True)] 
             in_channels = v
-    return nn.Sequential(*layers[:-1])
+
+    if invert:
+        layers = layers[:-1]
+    return nn.Sequential(*layers)
 
 class Autoencoder(nn.Module):
     def __init__(self, cfg):
