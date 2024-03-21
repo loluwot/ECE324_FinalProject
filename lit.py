@@ -47,6 +47,9 @@ class LitModel(pl.LightningModule):
         return autoenc_opt, critic_opt
     
     def training_step(self, batch, batch_idx):
+
+        torch.cuda.empty_cache()
+
         a_opt, c_opt = self.optimizers()
         x_b, y_b = torch.tensor_split(batch.to(torch.float32), 2)
 
