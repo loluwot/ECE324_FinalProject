@@ -75,6 +75,6 @@ class LitModel(pl.LightningModule):
     @torch.no_grad()
     def _visualize_results(self, x_b, y_b):
         samples = x_b[[0]], y_b[[0]]
-        results = self.model.autoenc(*[x.repeat(3, 1, 1, 1) for x in samples], torch.tensor([1., 0.5, 0.], dtype=x_b.dtype, device=x_b.device)[:, None])
+        results = self.model.autoenc(*[x.repeat(3, 1, 1, 1) for x in samples], torch.tensor([1., 0.5, 0.], dtype=x_b.dtype, device=x_b.device)[(slice(None, None),) + (None,)*(x_b.ndim - 1)])
         image_grid = make_grid([unnormalize(x, tensor=True) for x in [samples[0][0]] + results.unbind(dim=0) + [samples[1][0]]], nrow=3)
         wandb.log({'result':wandb.Image(image_grid)})
