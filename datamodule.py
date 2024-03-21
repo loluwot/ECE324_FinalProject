@@ -8,22 +8,23 @@ import cv2
 from pathlib import Path
 import lightning.pytorch as pl
 
-means = [0.5022, 0.4599, 0.3994]
-stds = [0.2554, 0.2457, 0.2504]
+MEANS = [0.5022, 0.4599, 0.3994]
+STDS = [0.2554, 0.2457, 0.2504]
 
 def normalize(im):
     # means = torch.tensor([0.5022, 0.4599, 0.3994])
     # stds = torch.tensor([0.2554, 0.2457, 0.2504])
-    means = np.array(means)
-    stds = np.array(stds)
+    
+    means = np.array(MEANS)
+    stds = np.array(STDS)
     im -= means[..., None, None]
     im /= stds[..., None, None]
     return im
     
 def unnormalize(im, tensor=False):
     f = (lambda x: torch.tensor(x).to(im)) if tensor else np.array
-    means = f(means)
-    stds = f(stds)
+    means = f(MEANS)
+    stds = f(STDS)
     im *= stds[..., None, None]
     im += means[..., None, None]
     return im
