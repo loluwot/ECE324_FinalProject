@@ -63,9 +63,9 @@ class LitModel(pl.LightningModule):
         a_opt.step()
 
         c_loss = self.model.forward_critic(x_b, y_b, res, alpha, autoenc_y)
-        c_opt.zero_grad()
-        self.manual_backward(c_loss)
-        c_opt.step()
+        # c_opt.zero_grad()
+        # self.manual_backward(c_loss)
+        # c_opt.step()
 
         self.log_dict({"autoenc_loss": loss, "critic_loss": c_loss}, prog_bar=True)
         if ((self.current_epoch + 1) % self.config.check_samples_every_n_epochs == 0) and (batch_idx < self.config.visualize_n_batches):
