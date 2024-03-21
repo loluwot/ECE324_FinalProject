@@ -29,6 +29,7 @@ def unnormalize(im, tensor=False):
     stds = f(STDS)
     im *= stds[..., None, None]
     im += means[..., None, None]
+    im = im.clamp(0., 1.)
     return im
 
 class AFHQDataset(Dataset):
