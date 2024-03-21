@@ -105,12 +105,11 @@ def train(cfg):
         ckpt_callbacks = [
             ModelCheckpoint(
                 dirpath=ckpt_dir,
-                monitor='val_loss',
-                filename='checkpoint-{val_loss:02f}',
-                save_top_k=2,
+                monitor='autoenc_loss',
+                filename='checkpoint-{autoenc_loss:02f}',
                 save_last=True,
                 verbose=True,
-                # train_time_interval=datetime.timedelta(minutes=cfg.checkpoint_every_n_min),
+                train_time_interval=datetime.timedelta(minutes=cfg.checkpoint_every_n_min),
                 every_n_epochs=1
             ),
         ]
