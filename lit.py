@@ -46,8 +46,8 @@ class LitModel(pl.LightningModule):
     def configure_optimizers(self):
         cfg = self.config
         cuda = torch.cuda.is_available()
-        autoenc_opt = torch.optim.Adam(self.model.autoenc.parameters(), lr=cfg.lr, fused=cuda)
-        critic_opt = torch.optim.Adam(self.model.critic.parameters(), lr=cfg.lr, fused=cuda)
+        autoenc_opt = torch.optim.Adam(self.model.autoenc.parameters(), lr=cfg.lr)#, fused=cuda)
+        critic_opt = torch.optim.Adam(self.model.critic.parameters(), lr=cfg.lr)#, fused=cuda)
         return autoenc_opt, critic_opt
     
     def training_step(self, batch, batch_idx):
