@@ -36,6 +36,7 @@ class Autoencoder(nn.Module):
         self.decoder = make_layers(cfg.autoenc, invert=True)
 
     def forward(self, x, y, alpha=0.):
+        print(alpha.shape)
         return self.decoder(alpha * self.encoder(x) + (1 - alpha)*self.encoder(y))
     
 class Critic(nn.Module):
