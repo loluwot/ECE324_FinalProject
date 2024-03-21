@@ -69,9 +69,8 @@ class LitModel(pl.LightningModule):
         c_opt.step()
 
         self.log_dict({"autoenc_loss": loss, "critic_loss": c_loss}, prog_bar=True)
-
-        print(batch_idx)
-
+        if ((self.current_epoch + 1) % self.config.check_samples_every_n_epochs == 0) and (batch_idx < self.config.visualize_n_batches):
+            self._visualize_results(x_b, y_b)
 
     @torch.no_grad()
     def _visualize_results(self, x_b, y_b):
