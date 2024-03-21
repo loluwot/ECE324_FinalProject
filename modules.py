@@ -16,7 +16,7 @@ def make_layers(cfg, batch_norm: bool = False, invert=False):
     cfg = cfg[::1 - 2*invert]
 
     in_channels = int(cfg[0])
-    for i, v in enumerate(cfg):
+    for i, v in enumerate(cfg[1:]):
         if v == "M":
             layers += [pool_l()]
         else:
@@ -25,7 +25,9 @@ def make_layers(cfg, batch_norm: bool = False, invert=False):
             if batch_norm:
                 layers += [conv2d, nn.BatchNorm2d(v), nn.ReLU(inplace=True)]
             else:
-                layers += [conv2d] + ([nn.ReLU(inplace=True)] if i != len(cfg) - 1 else [])
+                layers += [conv2d]
+                if i != len(cfg) - 2:
+                    layers += [nn.ReLU(inplace=True)] 
             in_channels = v
     return nn.Sequential(*layers)
 
