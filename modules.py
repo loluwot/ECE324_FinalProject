@@ -9,7 +9,7 @@ from pydantic import BaseModel
 
 from typing import List, Union
 
-def make_layers(cfg, batch_norm: bool = False, invert=False):
+def make_layers(cfg, batch_norm: bool = True, invert=False):
     layers = []
 
     pool_l = lambda : nn.MaxPool2d(kernel_size=2, stride=2) if not invert else nn.UpsamplingNearest2d(scale_factor=2)
@@ -23,9 +23,9 @@ def make_layers(cfg, batch_norm: bool = False, invert=False):
             v = int(v)
             conv2d = nn.Conv2d(in_channels, v, kernel_size=3, padding=1)
             if batch_norm:
-                layers += [conv2d, nn.BatchNorm2d(v), nn.ReLU(inplace=False)]
+                layers += [conv2d, nn.BatchNorm2d(v), nn.ReLU(inplace=True)]
             else:
-                layers += [conv2d, nn.ReLU(inplace=False)] 
+                layers += [conv2d, nn.ReLU(inplace=True)] 
             in_channels = v
 
     if invert:
@@ -37,8 +37,6 @@ class Autoencoder(nn.Module):
         super().__init__()
         self.encoder = make_layers(cfg.autoenc)
         self.decoder = make_layers(cfg.autoenc, invert=True)
-
-        print(self.decoder)
 
     def forward(self, x, y, alpha=0.):
         return self.decoder(alpha * self.encoder(x) + (1 - alpha)*self.encoder(y))
