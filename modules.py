@@ -69,7 +69,7 @@ class ACAI(nn.Module):
     def forward_autoenc(self, x, y):
         bs = x.shape[0]
         print('BATCH SIZE', bs)
-        alpha = torch.rand(bs, 1, dtype=x.dtype, device=x.device)
+        alpha = torch.rand(bs, dtype=x.dtype, device=x.device)[(slice(None, None),) + (None,)*(x.ndims - 1)]
         res = self.autoenc(x, y, alpha)
         autoenc_y = self.autoenc(x, y, torch.zeros_like(alpha))
         loss = F.mse_loss(autoenc_y, y)
