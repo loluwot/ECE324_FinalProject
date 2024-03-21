@@ -22,6 +22,7 @@ BASE_SIZE = 512
 
 class AFHQDataset(Dataset):
     def __init__(self, path, im_size=512, use_normalize=False):
+        super().__init__()
         self.image_filenames = list(Path(path).glob('**/*.jpg'))
         self.im_size = im_size
         self.normalize = normalize if use_normalize else (lambda x: x)
@@ -35,7 +36,7 @@ class AFHQDataset(Dataset):
 
 class AFHQDataModule(pl.LightningDataModule):
     def __init__(self, base_dataset, num_workers=1, batch_size=32):
-        super().__init__(self)
+        super().__init__()
         self.base_dataset = base_dataset
         self.num_workers = num_workers
         self.batch_size = batch_size
