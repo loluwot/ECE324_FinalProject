@@ -41,7 +41,8 @@ class Autoencoder(nn.Module):
         print(self.decoder)
 
     def forward(self, x, y, alpha=0.):
-        return self.decoder(alpha * self.encoder(x) + (1 - alpha)*self.encoder(y))
+        # return self.decoder(alpha * self.encoder(x) + (1 - alpha)*self.encoder(y))
+        return self.decoder(self.encoder(y))
     
 class Critic(nn.Module):
     def __init__(self, cfg):
