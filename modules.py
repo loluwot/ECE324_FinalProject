@@ -31,7 +31,7 @@ def make_layers(cfg, batch_norm: bool = False, invert=False):
 
 class Autoencoder(nn.Module):
     def __init__(self, cfg):
-        super().__init__(self)
+        super().__init__()
         self.encoder = make_layers(cfg.autoenc)
         self.decoder = make_layers(cfg.autoenc, invert=True)
 
@@ -41,7 +41,7 @@ class Autoencoder(nn.Module):
     
 class Critic(nn.Module):
     def __init__(self, cfg):
-        super().__init__(self)
+        super().__init__()
         self.classifier = nn.Sequential(
             make_layers(cfg.critic),
             nn.AdaptiveAvgPool2d((cfg.critic_psize, cfg.critic_psize)),
@@ -61,7 +61,7 @@ class Critic(nn.Module):
 
 class ACAI(nn.Module):
     def __init__(self, cfg):
-        super().__init__(self)
+        super().__init__()
         self.autoenc = Autoencoder(cfg)
         self.critic = Critic(cfg)
         self.cfg = cfg
