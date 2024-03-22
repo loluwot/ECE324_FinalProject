@@ -62,16 +62,19 @@ class Critic(nn.Module):
     def forward(self, x):
         return torch.clamp(self.act(self.classifier(x)), 0., 0.5)
 
+loss_dict = {'mse': nn.MSELoss, 'l1': nn.L1Loss}
+
 class ACAI(nn.Module):
     def __init__(self, cfg):
         super().__init__()
         self.autoenc = Autoencoder(cfg)
         self.critic = Critic(cfg)
         self.cfg = cfg
+        self.critic_criterion = loss_dict.get(self.cfg.critic_loss, nn.MSELoss)()
 
     def forward_autoenc(self, x, y):
         bs = x.shape[0]
-        alpha = torch.rand(bs, dtype=x.dtype, device=x.device)[(slice(None, None),) + (None,)*(x.ndim - 1)]
+        alpha = 0.5*torch.rand(bs, dtype=x.dtype, device=x.device)[(slice(None, None),) + (None,)*(x.ndim - 1)]
         autoenc_y = self.autoenc(x, y, torch.zeros_like(alpha))
         loss = F.mse_loss(autoenc_y, y)
         res = self.autoenc(x, y, alpha)
@@ -79,7 +82,10 @@ class ACAI(nn.Module):
         return loss, alpha, res, autoenc_y
 
     def forward_critic(self, x, y, res, alpha, autoenc_y):
-        return F.l1_loss(self.critic(res.detach()).squeeze(), alpha.squeeze()) + self.critic(self.cfg.critic_gamma * y + (1 - self.cfg.critic_gamma) * autoenc_y.detach()).abs().mean()
+        loss = self.critic_criterion(self.critic(res.detach()).squeeze(), alpha.squeeze())
+        res = self.critic(self.cfg.critic_gamma * y + (1 - self.cfg.critic_gamma) * autoenc_y.detach())#.abs().mean()
+        loss += self.critic_criterion(res, torch.zeros_like(res))
+        return loss
    
 
 

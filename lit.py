@@ -31,6 +31,8 @@ class LitModelCfg(BaseModel):
 
     autoenc_lambda : float = 0.5
     critic_gamma : float = 0.2
+
+    critic_loss : str = 'l1'
     
 
 class LitModel(pl.LightningModule):
