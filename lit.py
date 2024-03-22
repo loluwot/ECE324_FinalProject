@@ -75,12 +75,13 @@ class LitModel(pl.LightningModule):
     def _visualize_results(self, x_b, y_b):
         N = self.config.visualize_n_samples
         samples = x_b[[0]], y_b[[0]]
-        results = self.model.autoenc(*[x.repeat(N, 1, 1, 1) for x in samples], (torch.linspace(1, 0, N).to(x_b))[(slice(None, None),) + (None,)*(x_b.ndim - 1)])
+        true_alpha = torch.linspace(1, 0, N).to(x_b)
+        results = self.model.autoenc(*[x.repeat(N, 1, 1, 1) for x in samples], true_alpha[(slice(None, None),) + (None,)*(x_b.ndim - 1)])
         
         wandb.log(
             {
                 "alpha": wandb.Table(
-                    data = torch.stack([torch.linspace(1, 0, N), self.model.critic(results).squeeze()], axis=-1), 
+                    data = torch.stack([true_alpha, self.model.critic(results).squeeze()], axis=-1), 
                     columns = ['target', 'prediction']
                 )
             }
