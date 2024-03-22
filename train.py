@@ -50,6 +50,7 @@ class TrainConfig(LitModelCfg):
     checkpoint : bool = False
     checkpoint_dir: Optional[str] = None
     checkpoint_every_n_min: int = 10  # minutes
+    checkpoint_every_n_epochs : int = 10
 
     wandb: bool = False
     wandb_project: str = "ch_test"
@@ -124,8 +125,8 @@ def train(cfg):
                 filename='checkpoint-{autoenc_loss:02f}',
                 save_last=True,
                 verbose=True,
-                train_time_interval=datetime.timedelta(minutes=cfg.checkpoint_every_n_min),
-                every_n_epochs=1
+                # train_time_interval=datetime.timedelta(minutes=cfg.checkpoint_every_n_min),
+                every_n_epochs=cfg.checkpoint_every_n_epochs
             ),
         ]
         callbacks.extend(ckpt_callbacks)
