@@ -75,7 +75,7 @@ class LitModel(pl.LightningModule):
     def _visualize_results(self, x_b, y_b):
         N = self.config.visualize_n_samples
         samples = x_b[[0]], y_b[[0]]
-        results = self.model.autoenc(*[x.repeat(3, 1, 1, 1) for x in samples], (torch.linspace(1, 0, N).to(x_b))[(slice(None, None),) + (None,)*(x_b.ndim - 1)])
+        results = self.model.autoenc(*[x.repeat(N, 1, 1, 1) for x in samples], (torch.linspace(1, 0, N).to(x_b))[(slice(None, None),) + (None,)*(x_b.ndim - 1)])
         
         wandb.log(
             {
