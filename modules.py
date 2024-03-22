@@ -60,7 +60,7 @@ class Critic(nn.Module):
         self.act = nn.Identity() if cfg.critic_act is False else nn.Sigmoid()
     
     def forward(self, x):
-        return 0.5 - torch.abs(0.5 - self.act(self.classifier(x)))
+        return self.act(self.classifier(x))
 
 class ACAI(nn.Module):
     def __init__(self, cfg):
