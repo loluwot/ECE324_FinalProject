@@ -51,9 +51,9 @@ class Critic(nn.Module):
             nn.Flatten(),
             nn.Linear(int(cfg.critic[-1]) * cfg.critic_psize ** 2, cfg.critic_hidden),
             nn.ReLU(True),
-            nn.Dropout(p=cfg.critic_dropout),
-            nn.Linear(cfg.critic_hidden, cfg.critic_hidden),
-            nn.ReLU(True),
+            # nn.Dropout(p=cfg.critic_dropout),
+            # nn.Linear(cfg.critic_hidden, cfg.critic_hidden),
+            # nn.ReLU(True),
             nn.Dropout(p=cfg.critic_dropout),
             nn.Linear(cfg.critic_hidden, 1),
         )

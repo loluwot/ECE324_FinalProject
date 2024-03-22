@@ -23,11 +23,11 @@ class LitModelCfg(BaseModel):
     ##### ARCHITECTURE
     
     autoenc: List[Union[str, int]] = [3, 64, "M", 128, "M", 256, 256, "M", 512, 512, "M", 512, 512, "M", 512]
-    critic: List[Union[str, int]] = [3, 64, "M", 128, "M", 256, 256, "M", 512, 512, "M", 512]
+    critic: List[Union[str, int]] = [3, 64, "M", 128, "M", 256, 256, "M", 256, "M", 256]
     critic_dropout : float = 0.
     critic_act : bool = False
-    critic_psize : int = 7
-    critic_hidden : int = 4096
+    critic_psize : int = 3
+    critic_hidden : int = 1024
 
     autoenc_lambda : float = 0.5
     critic_gamma : float = 0.2
@@ -81,7 +81,7 @@ class LitModel(pl.LightningModule):
         wandb.log(
             {
                 "alpha": wandb.Table(
-                    data = torch.stack([true_alpha, self.model.critic(results).squeeze()], axis=-1).cpu().numpy(), 
+                    data = torch.stack([0.5 - torch.abs(0.5 - true_alpha), self.model.critic(results).squeeze()], axis=-1).cpu().numpy(), 
                     columns = ['target', 'prediction']
                 )
             }
