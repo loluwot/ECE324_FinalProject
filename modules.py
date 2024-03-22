@@ -75,11 +75,11 @@ class ACAI(nn.Module):
         autoenc_y = self.autoenc(x, y, torch.zeros_like(alpha))
         loss = F.mse_loss(autoenc_y, y)
         res = self.autoenc(x, y, alpha)
-        loss += self.cfg.autoenc_lambda * self.critic(res).square().sum()
+        loss += self.cfg.autoenc_lambda * self.critic(res).square().mean()
         return loss, alpha, res, autoenc_y
 
     def forward_critic(self, x, y, res, alpha, autoenc_y):
-        return F.mse_loss(self.critic(res.detach()).squeeze(), alpha.squeeze()) + self.critic(self.cfg.critic_gamma * y + (1 - self.cfg.critic_gamma) * autoenc_y.detach()).square().sum()
+        return F.mse_loss(self.critic(res.detach()).squeeze(), alpha.squeeze()) + self.critic(self.cfg.critic_gamma * y + (1 - self.cfg.critic_gamma) * autoenc_y.detach()).square().mean()
    
 
 
