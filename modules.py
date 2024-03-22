@@ -60,7 +60,7 @@ class Critic(nn.Module):
         self.act = nn.Identity() if cfg.critic_act is False else nn.Sigmoid()
     
     def forward(self, x):
-        return torch.clamp(self.act(self.classifier(x)), 0., 0.5)
+        return self.act(self.classifier(x))#, 0., 0.5)
 
 loss_dict = {'mse': nn.MSELoss, 'l1': nn.L1Loss}
 
