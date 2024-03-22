@@ -81,7 +81,7 @@ class LitModel(pl.LightningModule):
         wandb.log(
             {
                 "alpha": wandb.Table(
-                    data = torch.stack([true_alpha, self.model.critic(results).squeeze()], axis=-1), 
+                    data = torch.stack([true_alpha, self.model.critic(results).squeeze()], axis=-1).cpu().numpy(), 
                     columns = ['target', 'prediction']
                 )
             }
