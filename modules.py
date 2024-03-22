@@ -60,7 +60,7 @@ class Critic(nn.Module):
         self.act = nn.Identity() if cfg.critic_act is False else nn.Sigmoid()
     
     def forward(self, x):
-        return self.act(self.classifier(x))
+        return torch.clamp(self.act(self.classifier(x)), 0., 0.5)
 
 class ACAI(nn.Module):
     def __init__(self, cfg):
@@ -79,7 +79,7 @@ class ACAI(nn.Module):
         return loss, alpha, res, autoenc_y
 
     def forward_critic(self, x, y, res, alpha, autoenc_y):
-        return F.mse_loss(self.critic(res.detach()).squeeze(), alpha.squeeze()) + self.critic(self.cfg.critic_gamma * y + (1 - self.cfg.critic_gamma) * autoenc_y.detach()).square().mean()
+        return F.l1_loss(self.critic(res.detach()).squeeze(), alpha.squeeze()) + self.critic(self.cfg.critic_gamma * y + (1 - self.cfg.critic_gamma) * autoenc_y.detach()).abs().mean()
    
 
 
