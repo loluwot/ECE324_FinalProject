@@ -33,6 +33,7 @@ class LitModelCfg(BaseModel):
     critic_gamma : float = 0.2
 
     critic_loss : str = 'l1'
+    autoenc_loss : str = 'alex'
     
     ##### VIS #######
     visualize_n_batches : int = 1
