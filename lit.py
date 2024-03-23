@@ -40,7 +40,8 @@ class LitModel(pl.LightningModule):
         super().__init__()
         self.save_hyperparameters()
         
-        self.config = config
+        self.full_config = config
+        self.config = LitModelCfg.parse_obj(config)
         self.model = ACAI(config)
 
         self.automatic_optimization = False
