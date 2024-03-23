@@ -32,8 +32,8 @@ def unnormalize(im, tensor=False):
         means = means.unsqueeze(0)
         stds = stds.unsqueeze(0)
 
-    im *= stds
-    im += means
+    im = im * stds
+    im = im + means
     im = im.clamp(0., 1.)
     return im
 
