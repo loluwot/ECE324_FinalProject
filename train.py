@@ -92,7 +92,7 @@ def train(cfg):
         shuffle = not cfg.debug_single
     )
                                         
-    model = LitModel(config=cfg)
+    model = LitModel(config=dict(cfg))
     
     callbacks = [ModelSummary(max_depth=2)]
 
