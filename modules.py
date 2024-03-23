@@ -9,6 +9,8 @@ from pydantic import BaseModel
 
 from typing import List, Union
 
+import lpips
+
 def make_layers(cfg, batch_norm: bool = True, invert=False):
     layers = []
 
@@ -62,7 +64,9 @@ class Critic(nn.Module):
     def forward(self, x):
         return self.act(self.classifier(x))#, 0., 0.5)
 
-loss_dict = {'mse': nn.MSELoss, 'l1': nn.L1Loss}
+loss_dict = {'mse': nn.MSELoss(), 'l1': nn.L1Loss(), 'alex': lpips.LPIPS(net='alex')}
+loss_norm = {'mse': False, 'l1': False, 'alex': True}
+
 
 class ACAI(nn.Module):
     def __init__(self, cfg):
@@ -70,13 +74,15 @@ class ACAI(nn.Module):
         self.autoenc = Autoencoder(cfg)
         self.critic = Critic(cfg)
         self.cfg = cfg
-        self.critic_criterion = loss_dict.get(self.cfg.critic_loss, nn.MSELoss)()
+        self.critic_criterion = loss_dict.get(self.cfg.critic_loss, nn.MSELoss())
+        self.autoenc_criterion = loss_dict.get(self.cfg.autoenc_loss, nn.MSELoss())
+        self.autoenc_unnorm = (lambda x: x) if not loss_norm[self.cfg.autoenc_loss] else (lambda x: unnormalize(x, tensor=True) * 2 - 1)
 
     def forward_autoenc(self, x, y):
         bs = x.shape[0]
         alpha = 0.5*torch.rand(bs, dtype=x.dtype, device=x.device)[(slice(None, None),) + (None,)*(x.ndim - 1)]
         autoenc_y = self.autoenc(x, y, torch.zeros_like(alpha))
-        loss = F.mse_loss(autoenc_y, y)
+        loss = self.autoenc_criterion(*[self.autoenc_unnorm(z) for z in [autoenc_y, y]]) 
         res = self.autoenc(x, y, alpha)
         loss += self.cfg.autoenc_lambda * self.critic(res).square().mean()
         return loss, alpha, res, autoenc_y

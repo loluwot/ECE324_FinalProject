@@ -13,20 +13,25 @@ import random
 MEANS = [0.5022, 0.4599, 0.3994]
 STDS = [0.2554, 0.2457, 0.2504]
 
-def normalize(im):
+def normalize(im, tensor=False):
     # means = torch.tensor([0.5022, 0.4599, 0.3994])
     # stds = torch.tensor([0.2554, 0.2457, 0.2504])
-    
-    means = np.array(MEANS)
-    stds = np.array(STDS)
+    f = (lambda x: torch.tensor(x).to(im)) if tensor else np.array
+    means = f(MEANS)
+    stds = f(STDS)
     im -= means[..., None, None]
     im /= stds[..., None, None]
     return im
     
 def unnormalize(im, tensor=False):
     f = (lambda x: torch.tensor(x).to(im)) if tensor else np.array
-    means = f(MEANS)
-    stds = f(STDS)
+    means = f(MEANS)[..., None, None]
+    stds = f(STDS)[..., None, None]
+
+    if im.ndim == 4:
+        means = means.unsqueeze(0)
+        stds = stds.unsqueeze(0)
+        
     im *= stds[..., None, None]
     im += means[..., None, None]
     im = im.clamp(0., 1.)
