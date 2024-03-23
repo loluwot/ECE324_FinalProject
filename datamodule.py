@@ -31,9 +31,9 @@ def unnormalize(im, tensor=False):
     if im.ndim == 4:
         means = means.unsqueeze(0)
         stds = stds.unsqueeze(0)
-        
-    im *= stds[..., None, None]
-    im += means[..., None, None]
+
+    im *= stds
+    im += means
     im = im.clamp(0., 1.)
     return im
 
