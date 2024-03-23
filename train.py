@@ -62,10 +62,6 @@ class TrainConfig(LitModelCfg):
     debug_single : bool = False
     debug_num : int = 1
     
-    ##### VIS #######
-    visualize_n_batches : int = 1
-    check_samples_every_n_epochs : int = 10
-    visualize_n_samples : int = 5
 
     class Config(pydantic_cli.DefaultConfig):
         extra = "forbid"

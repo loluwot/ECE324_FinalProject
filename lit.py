@@ -34,6 +34,10 @@ class LitModelCfg(BaseModel):
 
     critic_loss : str = 'l1'
     
+    ##### VIS #######
+    visualize_n_batches : int = 1
+    check_samples_every_n_epochs : int = 10
+    visualize_n_samples : int = 5
 
 class LitModel(pl.LightningModule):
     def __init__(self, config):
