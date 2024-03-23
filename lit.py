@@ -46,7 +46,7 @@ class LitModel(pl.LightningModule):
         
         self.full_config = config
         self.config = LitModelCfg.parse_obj(config)
-        self.model = ACAI(config)
+        self.model = ACAI(self.config)
 
         self.automatic_optimization = False
     
