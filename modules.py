@@ -83,7 +83,7 @@ class ACAI(nn.Module):
         bs = x.shape[0]
         alpha = 0.5*torch.rand(bs, dtype=x.dtype, device=x.device)[(slice(None, None),) + (None,)*(x.ndim - 1)]
         autoenc_y = self.autoenc(x, y, torch.zeros_like(alpha))
-        loss = self.autoenc_criterion(*[self.autoenc_unnorm(z) for z in [autoenc_y, y]]) 
+        loss = self.autoenc_criterion(*[self.autoenc_unnorm(z) for z in [autoenc_y, y]]).mean()
         res = self.autoenc(x, y, alpha)
         loss += self.cfg.autoenc_lambda * self.critic(res).square().mean()
         return loss, alpha, res, autoenc_y
