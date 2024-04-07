@@ -43,7 +43,7 @@
     "critic_dropout": 0,
     "critic_gamma": 0.2,
     "critic_hidden": 1024,
-    "critic_loss": "l1",
+    "critic_loss": "l2",
     "critic_psize": 3,
     "data_folder": "afhq/train",
     "debug_data": false,
