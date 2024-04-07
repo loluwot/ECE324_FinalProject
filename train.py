@@ -34,6 +34,8 @@ class TrainConfig(LitModelCfg):
     accumulate_grad_batches : int = 1
     swa : bool = False
 
+    precision : Optional[str] = '16-mixed'
+
     ####### DATAMODULE CONFIG ##########
     data_folder : str = 'afhq/train'
     batch_size : int = 32
@@ -149,6 +151,7 @@ def train(cfg):
         limit_train_batches = cfg.debug_num if cfg.debug_single else None,
         limit_val_batches = 0,
         accumulate_grad_batches=cfg.accumulate_grad_batches,
+        precision=cfg.precision
     )
 
     ckpt_path = ckpt_dir / "last.ckpt"
@@ -159,14 +162,14 @@ def train(cfg):
 
 if __name__ == "__main__":
     
-    # from argparse import ArgumentParser
-    # parser = ArgumentParser()
-    # parser.add_argument('config', type=str)
+    from argparse import ArgumentParser
+    parser = ArgumentParser()
+    parser.add_argument('config', type=str)
 
-    # args = parser.parse_args()
-    # config_raw = (f := open(args.config)).read()
-    # cfg = pydantic_yaml.parse_yaml_raw_as(TrainConfig, config_raw)
+    args = parser.parse_args()
+    config_raw = (f := open(args.config)).read()
+    cfg = pydantic_yaml.parse_yaml_raw_as(TrainConfig, config_raw)
     
-    # train(cfg)
-    pydantic_cli.run_and_exit(TrainConfig, train)
+    train(cfg)
+    # pydantic_cli.run_and_exit(TrainConfig, train)
 
