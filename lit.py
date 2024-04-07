@@ -6,7 +6,7 @@ import torch.nn.functional as F
 import pydantic
 from pydantic import BaseModel
 
-from modules import ACAI
+from modules import ACAI, AEAI
 
 from typing import List, Union
 from torchvision.utils import make_grid
@@ -29,7 +29,12 @@ class LitModelCfg(BaseModel):
     critic_psize : int = 3
     critic_hidden : int = 1024
 
+    
+    M : int = 10
     autoenc_lambda : float = 0.5
+    cycle_lambda : float = 0.5
+    smooth_lambda : float = 0.5
+
     critic_gamma : float = 0.2
 
     critic_loss : str = 'l1'
@@ -47,7 +52,8 @@ class LitModel(pl.LightningModule):
         
         self.full_config = config
         self.config = LitModelCfg.parse_obj(config)
-        self.model = ACAI(self.config)
+        # self.model = ACAI(self.config)
+        self.model = AEAI(self.config)
 
         self.automatic_optimization = False
     

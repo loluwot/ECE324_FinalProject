@@ -41,8 +41,11 @@ class Autoencoder(nn.Module):
         self.encoder = make_layers(cfg.autoenc)
         self.decoder = make_layers(cfg.autoenc, invert=True)
 
+    def encoder_alpha(self, x, y, alpha=0.):
+        return alpha * self.encoder(x) + (1 - alpha) * self.encoder(y)
+        
     def forward(self, x, y, alpha=0.):
-        return self.decoder(alpha * self.encoder(x) + (1 - alpha)*self.encoder(y))
+        return self.decoder(self.encoder_alpha(x, y, alpha))
         # return self.decoder(self.encoder(y))
     
 class Critic(nn.Module):
@@ -94,6 +97,48 @@ class ACAI(nn.Module):
         loss += self.critic_criterion(res, torch.zeros_like(res))
         return loss
    
+from functools import reduce
+from einops import rearrange
+
+class AEAI(nn.Module):
+    def __init__(self, cfg):
+        super().__init__()
+        self.autoenc = Autoencoder(cfg)
+        self.critic = Critic(cfg)
+        self.cfg = cfg
+        self.autoenc_criterion = loss_dict.get(self.cfg.autoenc_loss, nn.MSELoss())
+        self.autoenc_unnorm = (lambda x: x) if not loss_norm[self.cfg.autoenc_loss] else (lambda x: unnormalize(x, tensor=True) * 2 - 1)
+
+    def forward_autoenc(self, x, y):
+        bs = x.shape[0]
+        alpha = ((torch.arange(self.cfg.M + 1) / self.cfg.M) * torch.ones((bs, 1)))[..., None, None, None].to(x) # B M 1 1 1
+
+        # RECON LOSS
+        autoenc_y = self.autoenc(x, y, alpha[:, 0])
+        autoenc_x = self.autoenc(y, x, alpha[:, 0])
+        loss = reduce(lambda x, y: x + y, [self.autoenc_criterion(*[self.autoenc_unnorm(z) for z in tup]).mean() for tup in zip([autoenc_y, autoenc_x], [y, x])])
+        
+        # ADVERSARIAL LOSS
+        res_z = self.autoenc.encoder_alpha(x[:, None], y[:, None], alpha) # B M C H W
+        res_z_merged = rearrange('b m c h w -> (b m) c h w', res_z)
+        res_merged = self.autoenc.decoder(res_z_merged)
+        res = rearrange('(b m) c h w', res_merged, m=self.cfg.M + 1)
+        loss += self.cfg.autoenc_lambda * self.critic(res_merged).log().mean()
+        
+        # CYCLE CONSISTENCY
+        loss += self.cfg.cycle_lambda * (self.autoenc.encoder(self.autoenc.decoder(res_z_merged)) - res_z_merged).square().mean()
+
+        # SMOOTHNESS
+        loss += self.cfg.smooth_lambda * torch.gradient(res_merged, spacing=(alpha[0],), dim=1).square().mean()
+
+        return loss, alpha, res_merged, autoenc_y
+
+    def forward_critic(self, x, y, res, alpha, autoenc_y):
+        # loss = self.critic_criterion(self.critic(res.detach()).squeeze(), alpha.squeeze())
+        # res = self.critic(self.cfg.critic_gamma * y + (1 - self.cfg.critic_gamma) * autoenc_y.detach())#.abs().mean()
+        # loss += self.critic_criterion(res, torch.zeros_like(res))
+
+        loss = self.critic_criterion(self.critic(res.detach()).squeeze(), alpha_mod.flatten())
+        return loss
 
 
-    
