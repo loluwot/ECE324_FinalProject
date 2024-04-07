@@ -49,7 +49,7 @@ class AFHQDataset(Dataset):
         return len(self.image_filenames)
 
     def __getitem__(self, idx):
-        return self.normalize(cv2.resize(cv2.imread(str(self.image_filenames[idx].resolve()), cv2.IMREAD_COLOR), (self.im_size, self.im_size), interpolation=cv2.INTER_AREA)[..., ::-1].transpose(-1, 0, 1) / 255).astype(dtype)
+        return self.normalize(cv2.resize(cv2.imread(str(self.image_filenames[idx].resolve()), cv2.IMREAD_COLOR), (self.im_size, self.im_size), interpolation=cv2.INTER_AREA)[..., ::-1].transpose(-1, 0, 1) / 255).astype(self.dtype)
 
 class AFHQDataModule(pl.LightningDataModule):
     def __init__(self, base_dataset, num_workers=1, batch_size=32, shuffle=True):
