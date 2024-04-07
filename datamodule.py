@@ -38,17 +38,18 @@ def unnormalize(im, tensor=False):
     return im
 
 class AFHQDataset(Dataset):
-    def __init__(self, path, im_size=512, use_normalize=False):
+    def __init__(self, path, im_size=512, use_normalize=False, dtype=None):
         super().__init__()
         self.image_filenames = list(Path(path).glob('**/*.jpg'))
         self.im_size = im_size
         self.normalize = normalize if use_normalize else (lambda x: x)
+        self.dtype = np.float32 if dtype is None else dtype
         
     def __len__(self):
         return len(self.image_filenames)
 
     def __getitem__(self, idx):
-        return self.normalize(cv2.resize(cv2.imread(str(self.image_filenames[idx].resolve()), cv2.IMREAD_COLOR), (self.im_size, self.im_size), interpolation=cv2.INTER_AREA)[..., ::-1].transpose(-1, 0, 1) / 255)
+        return self.normalize(cv2.resize(cv2.imread(str(self.image_filenames[idx].resolve()), cv2.IMREAD_COLOR), (self.im_size, self.im_size), interpolation=cv2.INTER_AREA)[..., ::-1].transpose(-1, 0, 1) / 255).astype(dtype)
 
 class AFHQDataModule(pl.LightningDataModule):
     def __init__(self, base_dataset, num_workers=1, batch_size=32, shuffle=True):

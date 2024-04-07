@@ -18,6 +18,9 @@ import uuid
 import datetime
 from datetime import timedelta
 import json
+from collections import defaultdict
+
+dtype_dict = defaultdict(lambda : None, {'16-mixed': np.float16})
 
 
 class TrainConfig(LitModelCfg):
@@ -85,7 +88,8 @@ def train(cfg):
     base_dataset = AFHQDataset(
         cfg.data_folder,
         im_size = cfg.im_size,
-        use_normalize = cfg.normalize
+        use_normalize = cfg.normalize,
+        dtype = dtype_dict[cfg.precision]
     )
 
     datamodule = AFHQDataModule(
