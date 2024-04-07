@@ -14,6 +14,8 @@ from datamodule import unnormalize
 
 import wandb
 
+model_dict = {'acai': ACAI, 'aeai': AEAI}
+
 class LitModelCfg(BaseModel):
     
     ##### TRAINING PARAMS
@@ -22,6 +24,7 @@ class LitModelCfg(BaseModel):
 
     ##### ARCHITECTURE
     
+    architecture : str = 'acai'
     autoenc: List[Union[str, int]] = [3, 64, "M", 128, "M", 256, 256, "M", 512, 512, "M", 512, 512, "M", 512]
     critic: List[Union[str, int]] = [3, 64, "M", 128, "M", 256, 256, "M", 256, "M", 256]
     critic_dropout : float = 0.
@@ -53,7 +56,7 @@ class LitModel(pl.LightningModule):
         self.full_config = config
         self.config = LitModelCfg.parse_obj(config)
         # self.model = ACAI(self.config)
-        self.model = AEAI(self.config)
+        self.model = model_dict[config.architecture](self.config)
 
         self.automatic_optimization = False
     
@@ -71,12 +74,12 @@ class LitModel(pl.LightningModule):
         a_opt, c_opt = self.optimizers()
         x_b, y_b = torch.tensor_split(batch, 2)
 
-        loss, alpha, res, autoenc_y = self.model.forward_autoenc(x_b, y_b)
+        loss, *args = self.model.forward_autoenc(x_b, y_b)
         a_opt.zero_grad()
         self.manual_backward(loss)
         a_opt.step()
 
-        c_loss = self.model.forward_critic(x_b, y_b, res, alpha, autoenc_y)
+        c_loss = self.model.forward_critic(*args)
         c_opt.zero_grad()
         self.manual_backward(c_loss)
         c_opt.step()

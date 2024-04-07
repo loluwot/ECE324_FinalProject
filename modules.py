@@ -71,6 +71,18 @@ class Critic(nn.Module):
 loss_dict = {'mse': nn.MSELoss(), 'l1': nn.L1Loss(), 'alex': lpips.LPIPS(net='alex')}
 loss_norm = {'mse': False, 'l1': False, 'alex': True}
 
+class GenericAAI(nn.Module):
+    def __init__(self, cfg):
+        super().__init__()
+        self.autoenc = Autoencoder(cfg)
+        self.critic = Critic(cfg)
+        self.cfg = cfg
+
+    def forward_autoenc(self, x, y):
+        raise NotImplementedError
+    
+    def forward_critic(self, *args):
+        raise NotImplementedError
 
 class ACAI(nn.Module):
     def __init__(self, cfg):
@@ -89,9 +101,10 @@ class ACAI(nn.Module):
         loss = self.autoenc_criterion(*[self.autoenc_unnorm(z) for z in [autoenc_y, y]]).mean()
         res = self.autoenc(x, y, alpha)
         loss += self.cfg.autoenc_lambda * self.critic(res).square().mean()
-        return loss, alpha, res, autoenc_y
+        # return loss, alpha, res, autoenc_y
+        return loss, y, res, alpha, autoenc_y
 
-    def forward_critic(self, x, y, res, alpha, autoenc_y):
+    def forward_critic(self, y, res, alpha, autoenc_y):
         loss = self.critic_criterion(self.critic(res.detach()).squeeze(), alpha.squeeze())
         res = self.critic(self.cfg.critic_gamma * y + (1 - self.cfg.critic_gamma) * autoenc_y.detach())#.abs().mean()
         loss += self.critic_criterion(res, torch.zeros_like(res))
@@ -131,13 +144,10 @@ class AEAI(nn.Module):
         # SMOOTHNESS
         loss += self.cfg.smooth_lambda * torch.gradient(res_merged, spacing=(alpha[0],), dim=1).square().mean()
 
-        return loss, alpha, res_merged, autoenc_y
+        return loss, res_merged, alpha, autoenc_y
 
-    def forward_critic(self, x, y, res, alpha, autoenc_y):
-        # loss = self.critic_criterion(self.critic(res.detach()).squeeze(), alpha.squeeze())
-        # res = self.critic(self.cfg.critic_gamma * y + (1 - self.cfg.critic_gamma) * autoenc_y.detach())#.abs().mean()
-        # loss += self.critic_criterion(res, torch.zeros_like(res))
-
+    def forward_critic(self, res, alpha, autoenc_y):
+        alpha_mod = (0.5 - alpha).abs() * 2
         loss = self.critic_criterion(self.critic(res.detach()).squeeze(), alpha_mod.flatten())
         return loss
 
