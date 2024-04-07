@@ -63,7 +63,7 @@ class LitModel(pl.LightningModule):
         # torch.cuda.empty_cache()
 
         a_opt, c_opt = self.optimizers()
-        x_b, y_b = torch.tensor_split(batch.to(torch.float32), 2)
+        x_b, y_b = torch.tensor_split(batch, 2)
 
         loss, alpha, res, autoenc_y = self.model.forward_autoenc(x_b, y_b)
         a_opt.zero_grad()
