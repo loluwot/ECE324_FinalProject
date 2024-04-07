@@ -19,6 +19,7 @@ import datetime
 from datetime import timedelta
 import json
 from collections import defaultdict
+import numpy as np
 
 dtype_dict = defaultdict(lambda : None, {'16-mixed': np.float16})
 
