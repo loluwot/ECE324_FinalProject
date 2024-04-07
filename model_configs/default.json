@@ -67,7 +67,7 @@
     "visualize_n_samples": 5,
     "wandb": true,
     "wandb_entity": "loluwot",
-    "wandb_project": "ch_test",
+    "wandb_project": "acai_test",
     "wandb_run_id": null,
     "wandb_run_name": null
 }
