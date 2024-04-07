@@ -26,7 +26,7 @@
     "batch_size": 32,
     "check_samples_every_n_epochs": 10,
     "checkpoint": true,
-    "checkpoint_dir": "acai_l2",
+    "checkpoint_dir": "aeai_l2",
     "checkpoint_every_n_epochs": 10,
     "checkpoint_every_n_min": 10,
     "critic": [
@@ -68,7 +68,7 @@
     "swa": false,
     "visualize_n_batches": 1,
     "visualize_n_samples": 5,
-    "wandb": true,
+    "wandb": false,
     "wandb_entity": "loluwot",
     "wandb_project": "acai_test",
     "wandb_run_id": null,
