@@ -57,7 +57,7 @@
     "max_epochs": 2000,
     "normalize": true,
     "num_nodes": 1,
-    "num_workers": 4,
+    "num_workers": 8,
     "precision": "16-mixed",
     "progress_bar": true,
     "seed": 42,
