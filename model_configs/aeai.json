@@ -18,9 +18,9 @@
         "M",
         512
     ],
-    "autoenc_lambda": 1e-2,
+    "autoenc_lambda": 1e-1,
     "cycle_lambda": 1e-2,
-    "smooth_lambda": 1e-1,
+    "smooth_lambda": 1e-2,
     "autoenc_loss": "mse",
     "architecture": "aeai",
     "batch_size": 32,
