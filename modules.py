@@ -146,9 +146,6 @@ class AEAI(GenericAAI):
         recon_loss = reduce(lambda x, y: x + y, [self.autoenc_criterion(*[self.autoenc_unnorm(z) for z in tup]).mean() for tup in zip([autoenc_y, autoenc_x], [y, x])])        
         # SMOOTHNESS
         # if self.cfg.fast_gradient:
-        #     res_z = self.autoenc.encoder_alpha(x, y, alpha) # B C H W
-        #     # res_z_merged = rearrange(res_z, 'b m c h w -> (b m) c h w')
-        #     res = self.autoenc.decoder(res_z)
         #     loss += self.cfg.smooth_lambda * torch.gradient(rearrange(res, '(b m) c h w -> b m c h w', m=M+1), spacing=(alpha[0].squeeze(),), dim=1)[0].square().mean()
         # else:
             ## SLOW BUT ACCURATE GRADIENT CALC ###
@@ -158,10 +155,14 @@ class AEAI(GenericAAI):
             return res.flatten(), (res.squeeze(), res_z.squeeze())
         
         # x_exp, y_exp = [xx.repeat_interleave((M + 1), dim=0) for xx in (x, y)]
-        jacobian, (res, res_z) = torch.func.vmap(torch.func.jacfwd(function, has_aux=True))(alpha, x, y)
-        # print(torch.gradient(rearrange(res_merged, '(b m) c h w -> b m c h w', m=M+1), spacing=(alpha[0].squeeze(),), dim=1)[0].shape)
-        # print(jacobian - torch.gradient(rearrange(res_merged, '(b m) c h w -> b m c h w', m=M+1), spacing=(alpha[0].squeeze(),), dim=1)[0])
-        smoothness_loss = (self.cfg.smooth_lambda * jacobian.square()).mean()
+        # jacobian, (res, res_z) = torch.func.vmap(torch.func.jacfwd(function, has_aux=True))(alpha, x, y)
+        # # print(torch.gradient(rearrange(res_merged, '(b m) c h w -> b m c h w', m=M+1), spacing=(alpha[0].squeeze(),), dim=1)[0].shape)
+        # # print(jacobian - torch.gradient(rearrange(res_merged, '(b m) c h w -> b m c h w', m=M+1), spacing=(alpha[0].squeeze(),), dim=1)[0])
+        # smoothness_loss = (self.cfg.smooth_lambda * jacobian.square()).mean()
+        smoothness_loss = 0.
+        res_z = self.autoenc.encoder_alpha(x, y, alpha) # B C H W
+        # res_z_merged = rearrange(res_z, 'b m c h w -> (b m) c h w')
+        res = self.autoenc.decoder(res_z)
 
         # ADVERSARIAL LOSS
         adv_loss = -self.cfg.autoenc_lambda * F.logsigmoid(self.critic(res)).mean()
