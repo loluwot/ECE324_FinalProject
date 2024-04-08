@@ -141,8 +141,8 @@ class AEAI(GenericAAI):
         alpha = torch.rand(bs).to(x) # B 1 1 1
 
         # RECON LOSS
-        autoenc_y = self.autoenc(x, y, torch.zeros_like(alpha))
-        autoenc_x = self.autoenc(y, x, torch.zeros_like(alpha))
+        autoenc_y = self.autoenc.decoder(self.autoenc.encoder(y))
+        autoenc_x = self.autoenc.decoder(self.autoenc.encoder(x))
         recon_loss = reduce(lambda x, y: x + y, [self.autoenc_criterion(*[self.autoenc_unnorm(z) for z in tup]).mean() for tup in zip([autoenc_y, autoenc_x], [y, x])])        
         # SMOOTHNESS
         # if self.cfg.fast_gradient:
