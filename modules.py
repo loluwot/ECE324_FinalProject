@@ -149,10 +149,10 @@ class AEAI(GenericAAI):
         #     loss += self.cfg.smooth_lambda * torch.gradient(rearrange(res, '(b m) c h w -> b m c h w', m=M+1), spacing=(alpha[0].squeeze(),), dim=1)[0].square().mean()
         # else:
             ## SLOW BUT ACCURATE GRADIENT CALC ###
-        def function(alpha, x, y):
-            res_z = self.autoenc.encoder_alpha(x[None], y[None], alpha[None])#.squeeze()
-            res = self.autoenc.decoder(res_z)            
-            return res.flatten(), (res.squeeze(), res_z.squeeze())
+        # def function(alpha, x, y):
+        #     res_z = self.autoenc.encoder_alpha(x[None], y[None], alpha[None])#.squeeze()
+        #     res = self.autoenc.decoder(res_z)            
+        #     return res.flatten(), (res.squeeze(), res_z.squeeze())
         
         # x_exp, y_exp = [xx.repeat_interleave((M + 1), dim=0) for xx in (x, y)]
         # jacobian, (res, res_z) = torch.func.vmap(torch.func.jacfwd(function, has_aux=True))(alpha, x, y)
