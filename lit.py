@@ -103,7 +103,7 @@ class LitModel(pl.LightningModule):
         wandb.log(
             {
                 "alpha": wandb.Table(
-                    data = torch.stack([0.5 - torch.abs(0.5 - true_alpha), self.model.critic(results).squeeze()], axis=-1).cpu().numpy(), 
+                    data = torch.stack([0.5 - torch.abs(0.5 - true_alpha), (nn.Identity() if self.cfg.architecture == 'acai' else nn.Sigmoid())(self.model.critic(results).squeeze())], axis=-1).cpu().numpy(), 
                     columns = ['target', 'prediction']
                 )
             }
