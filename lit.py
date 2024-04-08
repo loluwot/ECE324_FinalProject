@@ -45,6 +45,8 @@ class LitModelCfg(BaseModel):
     critic_loss : str = 'l1'
     autoenc_loss : str = 'alex'
     
+    fast_gradient : bool = True
+
     ##### VIS #######
     visualize_n_batches : int = 1
     check_samples_every_n_epochs : int = 10

@@ -12,7 +12,7 @@ from datamodule import unnormalize
 
 import lpips
 
-def make_layers(cfg, batch_norm: bool = True, invert=False):
+def make_layers(cfg, batch_norm: bool = True, invert=False, running=True):
     layers = []
 
     pool_l = lambda : nn.MaxPool2d(kernel_size=2, stride=2) if not invert else nn.UpsamplingNearest2d(scale_factor=2)
@@ -26,7 +26,7 @@ def make_layers(cfg, batch_norm: bool = True, invert=False):
             v = int(v)
             conv2d = nn.Conv2d(in_channels, v, kernel_size=3, padding=1)
             if batch_norm:
-                layers += [conv2d, nn.BatchNorm2d(v, track_running_stats=False), nn.ReLU(inplace=True)]
+                layers += [conv2d, nn.BatchNorm2d(v, track_running_stats=running), nn.ReLU(inplace=True)]
             else:
                 layers += [conv2d, nn.ReLU(inplace=True)] 
             in_channels = v
@@ -38,8 +38,8 @@ def make_layers(cfg, batch_norm: bool = True, invert=False):
 class Autoencoder(nn.Module):
     def __init__(self, cfg):
         super().__init__()
-        self.encoder = make_layers(cfg.autoenc)
-        self.decoder = make_layers(cfg.autoenc, invert=True)
+        self.encoder = make_layers(cfg.autoenc, running=self.cfg.fast_gradient)
+        self.decoder = make_layers(cfg.autoenc, invert=True, running=self.cfg.fast_gradient)
 
     def encoder_alpha(self, x, y, alpha=0.):
         if x.ndim == 5:
@@ -137,26 +137,27 @@ class AEAI(nn.Module):
         print('RECON LOSS', loss)
         
         # SMOOTHNESS
-        loss += self.cfg.smooth_lambda * torch.gradient(rearrange(res_merged, '(b m) c h w -> b m c h w', m=M+1), spacing=(alpha[0].squeeze(),), dim=1)[0].square().mean()
-        
 
-        ### SLOW BUT ACCURATE GRADIENT CALC ###
-        # def function(alpha, x, y):
-        #     res_z_merged = self.autoenc.encoder_alpha(x[None], y[None], alpha[None])#.squeeze()
-        #     res_merged = self.autoenc.decoder(res_z_merged)            
-        #     return res_merged.flatten(), (res_merged.squeeze(), res_z_merged.squeeze())
-        
-        # x_exp, y_exp = [xx.repeat_interleave((M + 1), dim=0) for xx in (x, y)]
-        # jacobian, (res_merged, res_z_merged) = torch.func.vmap(torch.func.jacfwd(function, has_aux=True))(alpha.reshape(-1, 1, 1, 1), x_exp, y_exp)
-        # # print(torch.gradient(rearrange(res_merged, '(b m) c h w -> b m c h w', m=M+1), spacing=(alpha[0].squeeze(),), dim=1)[0].shape)
-        # print(jacobian.reshape(2, 11, 3, 128, 128) - torch.gradient(rearrange(res_merged, '(b m) c h w -> b m c h w', m=M+1), spacing=(alpha[0].squeeze(),), dim=1)[0])
-        # # print(jacobian - torch.gradient(rearrange(res_merged, '(b m) c h w -> b m c h w', m=M+1), spacing=(alpha[0].squeeze(),), dim=1)[0])
-        # loss += (self.cfg.smooth_lambda * jacobian.square()).mean()
+        if self.cfg.fast_gradient:
+            res_z = self.autoenc.encoder_alpha(x[:, None], y[:, None], alpha) # B M C H W
+            res_z_merged = rearrange(res_z, 'b m c h w -> (b m) c h w')
+            res_merged = self.autoenc.decoder(res_z_merged)
+            loss += self.cfg.smooth_lambda * torch.gradient(rearrange(res_merged, '(b m) c h w -> b m c h w', m=M+1), spacing=(alpha[0].squeeze(),), dim=1)[0].square().mean()
+        else:
+            ## SLOW BUT ACCURATE GRADIENT CALC ###
+            def function(alpha, x, y):
+                res_z_merged = self.autoenc.encoder_alpha(x[None], y[None], alpha[None])#.squeeze()
+                res_merged = self.autoenc.decoder(res_z_merged)            
+                return res_merged.flatten(), (res_merged.squeeze(), res_z_merged.squeeze())
+            
+            x_exp, y_exp = [xx.repeat_interleave((M + 1), dim=0) for xx in (x, y)]
+            jacobian, (res_merged, res_z_merged) = torch.func.vmap(torch.func.jacfwd(function, has_aux=True))(alpha.reshape(-1, 1, 1, 1), x_exp, y_exp)
+            # print(torch.gradient(rearrange(res_merged, '(b m) c h w -> b m c h w', m=M+1), spacing=(alpha[0].squeeze(),), dim=1)[0].shape)
+            print(jacobian.reshape(2, 11, 3, 128, 128) - torch.gradient(rearrange(res_merged, '(b m) c h w -> b m c h w', m=M+1), spacing=(alpha[0].squeeze(),), dim=1)[0])
+            # print(jacobian - torch.gradient(rearrange(res_merged, '(b m) c h w -> b m c h w', m=M+1), spacing=(alpha[0].squeeze(),), dim=1)[0])
+            loss += (self.cfg.smooth_lambda * jacobian.square()).mean()
 
         # ADVERSARIAL LOSS
-        res_z = self.autoenc.encoder_alpha(x[:, None], y[:, None], alpha) # B M C H W
-        res_z_merged = rearrange(res_z, 'b m c h w -> (b m) c h w')
-        res_merged = self.autoenc.decoder(res_z_merged)
         loss -= self.cfg.autoenc_lambda * (self.critic(res_merged).abs() + 1e-5).log().mean()
         
         # CYCLE CONSISTENCY
