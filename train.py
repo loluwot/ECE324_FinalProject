@@ -188,7 +188,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     config_raw = (f := open(args.config)).read()
-    cfg = pydantic_yaml.parse_yaml_raw_as(TrainConfig, {**config_raw, **{k: v for k, v in dict(args) if k != 'config' and v != None}})
+    cfg = pydantic_yaml.parse_yaml_raw_as(TrainConfig, {**config_raw, **{k: v for k, v in vars(args) if k != 'config' and v != None}})
     
     train(cfg)
     # pydantic_cli.run_and_exit(TrainConfig, train)
