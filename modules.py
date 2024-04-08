@@ -26,7 +26,7 @@ def make_layers(cfg, batch_norm: bool = True, invert=False):
             v = int(v)
             conv2d = nn.Conv2d(in_channels, v, kernel_size=3, padding=1)
             if batch_norm:
-                layers += [conv2d, nn.BatchNorm2d(v), nn.ReLU(inplace=True)]
+                layers += [conv2d, nn.BatchNorm2d(v, track_running_stats=False), nn.ReLU(inplace=True)]
             else:
                 layers += [conv2d, nn.ReLU(inplace=True)] 
             in_channels = v
@@ -127,28 +127,36 @@ class AEAI(nn.Module):
 
     def forward_autoenc(self, x, y):
         bs = x.shape[0]
-        alpha = ((torch.arange(self.cfg.M + 1) / self.cfg.M) * torch.ones((bs, 1)))[(Ellipsis,) + (None,)*3].to(x) # B M 1 1 1
+        M = self.cfg.M
+        alpha = ((torch.arange(M + 1) / M) * torch.ones((bs, 1)))[(Ellipsis,) + (None,)*3].to(x) # B M 1 1 1
 
         # RECON LOSS
         autoenc_y = self.autoenc(x, y, alpha[:, 0])
         autoenc_x = self.autoenc(y, x, alpha[:, 0])
         loss = reduce(lambda x, y: x + y, [self.autoenc_criterion(*[self.autoenc_unnorm(z) for z in tup]).mean() for tup in zip([autoenc_y, autoenc_x], [y, x])])
-        # print('RECON LOSS', loss)
+        print('RECON LOSS', loss)
+        
+        # SMOOTHNESS
+        # loss += self.cfg.smooth_lambda * torch.gradient(rearrange(res_merged, '(b m) c h w -> b m c h w', m=M+1), spacing=(alpha[0].squeeze(),), dim=1)[0].square().mean()
+        
+        def function(alpha, x, y):
+            res_z_merged = self.autoenc.encoder_alpha(x[None], y[None], alpha[None])#.squeeze()
+            res_merged = self.autoenc.decoder(res_z_merged)            
+            return res_merged.flatten(), (res_merged.squeeze(), res_z_merged.squeeze())
+        
+        x_exp, y_exp = [xx.repeat_interleave((M + 1), dim=0) for xx in (x, y)]
+        jacobian, (res_merged, res_z_merged) = torch.func.vmap(torch.func.jacfwd(function, has_aux=True))(alpha.reshape(-1, 1, 1, 1), x_exp, y_exp)
+        loss += (self.cfg.smooth_lambda * jacobian.square()).mean()
+
         # ADVERSARIAL LOSS
         res_z = self.autoenc.encoder_alpha(x[:, None], y[:, None], alpha) # B M C H W
         res_z_merged = rearrange(res_z, 'b m c h w -> (b m) c h w')
         res_merged = self.autoenc.decoder(res_z_merged)
-        # res = rearrange(res_merged, '(b m) c h w -> b m c h w', m=self.cfg.M + 1)
-        # print('ADV LOSS', self.cfg.autoenc_lambda * (self.critic(res_merged).abs()+1e-5).log().mean())
         loss -= self.cfg.autoenc_lambda * (self.critic(res_merged).abs() + 1e-5).log().mean()
         
         # CYCLE CONSISTENCY
-        # print('CYCLE CONSIST', self.cfg.cycle_lambda * (self.autoenc.encoder(self.autoenc.decoder(res_z_merged)) - res_z_merged).square().mean())
         loss += self.cfg.cycle_lambda * (self.autoenc.encoder(self.autoenc.decoder(res_z_merged)) - res_z_merged).square().mean()
 
-        # SMOOTHNESS
-        # print('SMOOTHNESS', self.cfg.smooth_lambda * torch.gradient(res_merged, spacing=(alpha[0].squeeze(),), dim=1)[0].square().mean())
-        loss += self.cfg.smooth_lambda * torch.gradient(res_merged, spacing=(alpha[0].squeeze(),), dim=1)[0].square().mean()
 
         return loss, res_merged, alpha, autoenc_y
 
