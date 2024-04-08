@@ -42,7 +42,7 @@
         "M",
         256
     ],
-    "critic_act": true,
+    "critic_act": false,
     "critic_dropout": 0,
     "critic_gamma": 0.2,
     "critic_hidden": 1024,
