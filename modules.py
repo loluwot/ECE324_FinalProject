@@ -58,8 +58,9 @@ class Autoencoder(nn.Module):
     def encoder_alpha(self, x, y, alpha=0.):
         if x.ndim == 5:
             return alpha * self.encoder(x.squeeze(dim=1))[:, None] + (1 - alpha) * self.encoder(y.squeeze(dim=1))[:, None]
-        return alpha * self.encoder(x) + (1 - alpha) * self.encoder(y)
-        
+        res = alpha * self.encoder(x) + (1 - alpha) * self.encoder(y)
+        print(res.shape)
+        return res
     def forward(self, x, y, alpha=0.):
         return self.decoder(self.encoder_alpha(x, y, alpha))
         # return self.decoder(self.encoder(y))
