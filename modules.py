@@ -111,9 +111,9 @@ class ACAI(GenericAAI):
 
     def forward_autoenc(self, x, y):
         bs = x.shape[0]
-        x_z, y_z = self.encoder(x), self.encoder(y)
+        x_z, y_z = self.autoenc.encoder(x), self.autoenc.encoder(y)
         alpha = 0.5*torch.rand(bs, dtype=x.dtype, device=x.device)[(slice(None, None),) + (None,)*(x_z.ndim - 1)]
-        autoenc_y = self.decoder(y_z)
+        autoenc_y = self.autoenc.decoder(y_z)
         loss = self.autoenc_criterion(*[self.autoenc_unnorm(z) for z in [autoenc_y, y]]).mean()
         res = alpha * x_z + (1 - alpha) * y_z
         loss += self.cfg.autoenc_lambda * self.critic(res).square().mean()
