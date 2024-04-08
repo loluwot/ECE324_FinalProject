@@ -65,7 +65,7 @@ class Critic(nn.Module):
             nn.Dropout(p=cfg.critic_dropout),
             nn.Linear(cfg.critic_hidden, 1),
         )
-        self.act = nn.Identity() if cfg.critic_act is False else nn.ReLU()
+        self.act = nn.Identity() if cfg.critic_act is False else nn.Sigmoid()
     
     def forward(self, x):
         return self.act(self.classifier(x))#, 0., 0.5)
