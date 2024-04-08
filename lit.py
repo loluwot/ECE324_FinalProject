@@ -15,12 +15,15 @@ from datamodule import unnormalize
 import wandb
 
 model_dict = {'acai': ACAI, 'aeai': AEAI}
+optimizer_dict = {'adam': torch.optim.Adam, 'radam': torch.optim.RAdam}
 
 class LitModelCfg(BaseModel):
     
     ##### TRAINING PARAMS
 
-    lr : float = 1e-4
+    optimizer : str = "adam"
+    lr_autoenc : float = 1e-4
+    lr_critic : float = 1e-4
 
     ##### ARCHITECTURE
     
@@ -32,7 +35,6 @@ class LitModelCfg(BaseModel):
     critic_psize : int = 3
     critic_hidden : int = 1024
 
-    
     M : int = 10
     autoenc_lambda : float = 0.5
     cycle_lambda : float = 0.5
@@ -63,8 +65,8 @@ class LitModel(pl.LightningModule):
     def configure_optimizers(self):
         cfg = self.config
         cuda = torch.cuda.is_available()
-        autoenc_opt = torch.optim.Adam(self.model.autoenc.parameters(), lr=cfg.lr)#, fused=cuda)
-        critic_opt = torch.optim.Adam(self.model.critic.parameters(), lr=cfg.lr)#, fused=cuda)
+        autoenc_opt = optimizer_dict[cfg.optimizer](self.model.autoenc.parameters(), lr=cfg.lr_autoenc)#, fused=cuda)
+        critic_opt = optimizer_dict[cfg.optimizer](self.model.critic.parameters(), lr=cfg.lr_critic)#, fused=cuda)
         return autoenc_opt, critic_opt
     
     def training_step(self, batch, batch_idx):
