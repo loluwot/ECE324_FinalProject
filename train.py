@@ -165,7 +165,7 @@ def train(cfg):
 
     tuner = Tuner(trainer)
     if cfg.auto_batch_size:
-        tuner.scale_batch_size(model, mode="power")
+        tuner.scale_batch_size(model, datamodule=datamodule, mode="power")
 
     ckpt_path = ckpt_dir / "last.ckpt"
     ckpt_path = str(ckpt_path) if ckpt_path.exists() else None
