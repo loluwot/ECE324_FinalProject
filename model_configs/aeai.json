@@ -69,7 +69,7 @@
     "swa": false,
     "visualize_n_batches": 1,
     "visualize_n_samples": 5,
-    "wandb": false,
+    "wandb": true,
     "wandb_entity": "loluwot",
     "wandb_project": "aeai_test",
     "wandb_run_id": null,

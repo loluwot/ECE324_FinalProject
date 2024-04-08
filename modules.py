@@ -167,7 +167,6 @@ class AEAI(nn.Module):
         t = torch.ones_like(alpha)
         t[:, 1:-1] = 0.
         loss = F.binary_cross_entropy_with_logits((pred := self.critic(res.detach()).squeeze()), t.flatten())
-        print(pred, t.flatten())
         loss += F.binary_cross_entropy_with_logits((pred := self.critic(torch.cat([x, y], axis=0))), torch.ones_like(pred))
         return loss
 
