@@ -36,7 +36,7 @@ def make_layers(cfg, input_shape=(0,0,0), shapes=None, batch_norm: bool = True, 
         else:
             if len(cur_shape) == 1:
                 next_shape = shapes.pop(-1)
-                layers += [nn.Unflatten(-1, next_shape)]
+                layers += [nn.Linear(cur_shape[0], reduce(lambda x, y: x*y, next_shape)), nn.Unflatten(-1, next_shape)]
                 cur_shape = next_shape
             v = int(v)
             conv2d = nn.Conv2d(cur_shape[0], v, kernel_size=3, padding=1)
