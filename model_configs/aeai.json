@@ -76,6 +76,6 @@
     "wandb_run_id": null,
     "wandb_run_name": null,
 
-    "optimizer": "adam",
+    "optimizer": "radam",
     "fast_gradient": true
 }
