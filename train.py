@@ -13,6 +13,7 @@ import pathlib
 from pathlib import Path
 import pydantic_cli
 import pydantic_yaml
+from pydantic import BaseModel, Field
 
 import uuid
 import datetime
@@ -166,15 +167,28 @@ def train(cfg):
 
     return 0
 
+def add_model(parser, model):
+    fields = model.__fields__
+    for name, field in fields.items():
+        parser.add_argument(
+            f"--{name}", 
+            dest=name, 
+            type=field.type_, 
+            default=None,
+            help=field.field_info.description,
+        )
+    
 if __name__ == "__main__":
     
     from argparse import ArgumentParser
     parser = ArgumentParser()
     parser.add_argument('config', type=str)
-
+    
+    add_model(parser, TrainConfig)
     args = parser.parse_args()
+    
     config_raw = (f := open(args.config)).read()
-    cfg = pydantic_yaml.parse_yaml_raw_as(TrainConfig, config_raw)
+    cfg = pydantic_yaml.parse_yaml_raw_as(TrainConfig, {**config_raw, **{k: v for k, v in dict(args) if k != 'config' and v != None}})
     
     train(cfg)
     # pydantic_cli.run_and_exit(TrainConfig, train)
