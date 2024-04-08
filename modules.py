@@ -138,7 +138,7 @@ class AEAI(GenericAAI):
         bs = x.shape[0]
         # M = self.cfg.M
         # alpha = ((torch.arange(M + 1) / M) * torch.ones((bs, 1)))[(Ellipsis,) + (None,)*3].to(x) # B M 1 1 1
-        alpha = torch.rand(bs, 1, 1, 1).to(x) # B 1 1 1
+        alpha = torch.rand(bs).to(x) # B 1 1 1
 
         # RECON LOSS
         autoenc_y = self.autoenc(x, y, torch.zeros_like(alpha))
