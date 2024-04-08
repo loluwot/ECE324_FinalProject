@@ -62,7 +62,7 @@ class AFHQDataModule(pl.LightningDataModule):
     def train_dataloader(self):
         return DataLoader(
             dataset = self.base_dataset,
-            batch_size = self.batch_size | self.hparams.batch_size,
+            batch_size = self.batch_size,
             num_workers = self.num_workers,
             pin_memory = True,
             shuffle = self.shuffle
