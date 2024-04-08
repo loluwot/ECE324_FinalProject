@@ -140,7 +140,7 @@ class ACAIMod(GenericAAI):
         recon_loss = self.autoenc_criterion(*[self.autoenc_unnorm(z) for z in [autoenc_y, y]]).mean()
         
         def function(alpha, x_z, y_z):
-            res = self.autoenc.decoder(alpha * x_z + (1 - alpha) * y_z)            
+            res = self.autoenc.decoder((alpha * x_z + (1 - alpha) * y_z)[None])            
             return res.flatten(), (res.squeeze(),)
         
         jacobian, (res,) = torch.func.vmap(torch.func.jacfwd(function, has_aux=True))(alpha, x_z, y_z)
