@@ -187,8 +187,8 @@ if __name__ == "__main__":
     add_model(parser, TrainConfig)
     args = parser.parse_args()
     
-    config_raw = (f := open(args.config)).read()
-    cfg = pydantic_yaml.parse_yaml_raw_as(TrainConfig, {**config_raw, **{k: v for k, v in vars(args).items() if k != 'config' and v != None}})
+    # config_raw = (f := open(args.config)).read()
+    cfg = TrainConfig.parse_obj({**json.load(open(args.config)), **{k: v for k, v in vars(args).items() if k != 'config' and v != None}})
     
     train(cfg)
     # pydantic_cli.run_and_exit(TrainConfig, train)
