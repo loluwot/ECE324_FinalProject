@@ -35,7 +35,7 @@ class LitModelCfg(BaseModel):
     critic_psize : int = 3
     critic_hidden : int = 1024
 
-    M : int = 10
+    M : int = 5
     autoenc_lambda : float = 0.5
     cycle_lambda : float = 0.5
     smooth_lambda : float = 0.5
