@@ -176,6 +176,7 @@ def add_model(parser, model):
             type=field.type_, 
             default=None,
             help=field.field_info.description,
+            action='store' if field.type_ != bool else argparse.BooleanOptionalAction
         )
     
 if __name__ == "__main__":
