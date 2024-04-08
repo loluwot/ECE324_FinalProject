@@ -133,14 +133,14 @@ class AEAI(nn.Module):
         # RECON LOSS
         autoenc_y = self.autoenc(x, y, alpha[:, 0])
         autoenc_x = self.autoenc(y, x, alpha[:, 0])
-        loss = reduce(lambda x, y: x + y, [self.autoenc_criterion(*[self.autoenc_unnorm(z) for z in tup]).sum() for tup in zip([autoenc_y, autoenc_x], [y, x])])        
+        loss = reduce(lambda x, y: x + y, [self.autoenc_criterion(*[self.autoenc_unnorm(z) for z in tup]).mean() for tup in zip([autoenc_y, autoenc_x], [y, x])])        
         
         # SMOOTHNESS
         if self.cfg.fast_gradient:
             res_z = self.autoenc.encoder_alpha(x[:, None], y[:, None], alpha) # B M C H W
             res_z_merged = rearrange(res_z, 'b m c h w -> (b m) c h w')
             res_merged = self.autoenc.decoder(res_z_merged)
-            loss += bs * self.cfg.smooth_lambda * torch.gradient(rearrange(res_merged, '(b m) c h w -> b m c h w', m=M+1), spacing=(alpha[0].squeeze(),), dim=1)[0].square().mean()
+            loss += self.cfg.smooth_lambda * torch.gradient(rearrange(res_merged, '(b m) c h w -> b m c h w', m=M+1), spacing=(alpha[0].squeeze(),), dim=1)[0].square().mean()
         else:
             ## SLOW BUT ACCURATE GRADIENT CALC ###
             def function(alpha, x, y):
@@ -151,15 +151,14 @@ class AEAI(nn.Module):
             x_exp, y_exp = [xx.repeat_interleave((M + 1), dim=0) for xx in (x, y)]
             jacobian, (res_merged, res_z_merged) = torch.func.vmap(torch.func.jacfwd(function, has_aux=True))(alpha.reshape(-1, 1, 1, 1), x_exp, y_exp)
             # print(torch.gradient(rearrange(res_merged, '(b m) c h w -> b m c h w', m=M+1), spacing=(alpha[0].squeeze(),), dim=1)[0].shape)
-            print(jacobian.reshape(2, 11, 3, 128, 128) - torch.gradient(rearrange(res_merged, '(b m) c h w -> b m c h w', m=M+1), spacing=(alpha[0].squeeze(),), dim=1)[0])
             # print(jacobian - torch.gradient(rearrange(res_merged, '(b m) c h w -> b m c h w', m=M+1), spacing=(alpha[0].squeeze(),), dim=1)[0])
-            loss += bs * (self.cfg.smooth_lambda * jacobian.square()).mean()
+            loss += (self.cfg.smooth_lambda * jacobian.square()).mean()
 
         # ADVERSARIAL LOSS
-        loss -= bs * self.cfg.autoenc_lambda * (self.critic(res_merged)).log().mean()
+        loss -= self.cfg.autoenc_lambda * (self.critic(res_merged)).log().mean()
         
         # CYCLE CONSISTENCY
-        loss += bs * self.cfg.cycle_lambda * (self.autoenc.encoder(self.autoenc.decoder(res_z_merged)) - res_z_merged).square().mean()
+        loss += self.cfg.cycle_lambda * (self.autoenc.encoder(self.autoenc.decoder(res_z_merged)) - res_z_merged).square().mean()
         return loss, res_merged, alpha, x, y
 
     def forward_critic(self, res, alpha, x, y):
