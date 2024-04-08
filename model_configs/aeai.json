@@ -21,7 +21,7 @@
     "autoenc_lambda": 1e-2,
     "cycle_lambda": 1e-2,
     "smooth_lambda": 1e-1,
-    "autoenc_loss": "alex",
+    "autoenc_loss": "mse",
     "architecture": "aeai",
     "batch_size": 32,
     "check_samples_every_n_epochs": 10,
