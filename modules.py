@@ -11,36 +11,50 @@ from typing import List, Union
 from datamodule import unnormalize
 
 import lpips
+from einops.layers.torch import Rearrange
 
-def make_layers(cfg, batch_norm: bool = True, invert=False, running=True):
+def make_layers(cfg, input_shape=(0,0,0), shapes=None, batch_norm: bool = True, invert=False, running=True):
+    
+    cur_shape = input_shape
     layers = []
-
-    pool_l = lambda : nn.MaxPool2d(kernel_size=2, stride=2) if not invert else nn.UpsamplingNearest2d(scale_factor=2)
+    shapes = shapes or []
+    pool_l = nn.MaxPool2d(kernel_size=2, stride=2) if not invert else nn.UpsamplingNearest2d(scale_factor=2)
     cfg = cfg[::1 - 2*invert]
 
-    in_channels = int(cfg[0])
+    # in_channels = int(cfg[0])
     for i, v in enumerate(cfg[1:]):
         if v == "M":
-            layers += [pool_l()]
+            layers += [pool_l]
+            cur_shape = (cur_shape[0], *[x*2 if invert else x//2 for x in cur_shape[1:]])
+        elif str(v).startswith('L'):
+            if len(cur_shape) > 1:
+                layers += [nn.Flatten()]
+                shapes += [cur_shape]
+                cur_shape = (reduce(lambda x, y: x*y, cur_shape),)
+            layers += [nn.Linear(cur_shape[0], int(v[1:])), nn.ReLU(inplace=True)]
+            cur_shape = (int(v[1:]),)
         else:
+            if len(cur_shape) == 1:
+                next_shape = shapes.pop(-1)
+                layers += [nn.Unflatten(-1, next_shape)]
+                cur_shape = next_shape
             v = int(v)
-            conv2d = nn.Conv2d(in_channels, v, kernel_size=3, padding=1)
+            conv2d = nn.Conv2d(cur_shape[0], v, kernel_size=3, padding=1)
             if batch_norm:
                 layers += [conv2d, nn.BatchNorm2d(v, track_running_stats=running), nn.ReLU(inplace=True)]
             else:
                 layers += [conv2d, nn.ReLU(inplace=True)] 
-            in_channels = v
-
+            cur_shape = (v, *cur_shape[1:])
     if invert:
-        layers = layers[:-1]
-    return nn.Sequential(*layers)
+        layers = layers[:-1] #remove last relu
+    return nn.Sequential(*layers), cur_shape, shapes
 
 class Autoencoder(nn.Module):
-    def __init__(self, cfg):
+    def __init__(self, cfg, full_cfg):
         super().__init__()
-        self.encoder = make_layers(cfg.autoenc, running=cfg.fast_gradient)
-        self.decoder = make_layers(cfg.autoenc, invert=True, running=cfg.fast_gradient)
-
+        self.encoder, out_shape, shapes = make_layers(cfg.autoenc, running=cfg.fast_gradient, input_shape=(3, full_cfg['im_size'], full_cfg['im_size']))
+        self.decoder, in_shape, _ = make_layers(cfg.autoenc, invert=True, shapes=shapes, running=cfg.fast_gradient, input_shape=out_shape)
+        assert in_shape == (3, full_cfg['im_size'], full_cfg['im_size'])
     def encoder_alpha(self, x, y, alpha=0.):
         if x.ndim == 5:
             return alpha * self.encoder(x.squeeze(dim=1))[:, None] + (1 - alpha) * self.encoder(y.squeeze(dim=1))[:, None]
@@ -51,10 +65,10 @@ class Autoencoder(nn.Module):
         # return self.decoder(self.encoder(y))
     
 class Critic(nn.Module):
-    def __init__(self, cfg):
+    def __init__(self, cfg, full_cfg):
         super().__init__()
         self.classifier = nn.Sequential(
-            make_layers(cfg.critic),
+            make_layers(cfg.critic)[0],
             nn.AdaptiveAvgPool2d((cfg.critic_psize, cfg.critic_psize)),
             nn.Flatten(),
             nn.Linear(int(cfg.critic[-1]) * cfg.critic_psize ** 2, cfg.critic_hidden),
@@ -74,11 +88,15 @@ loss_dict = {'mse': nn.MSELoss(), 'l1': nn.L1Loss(), 'alex': lpips.LPIPS(net='al
 loss_norm = {'mse': False, 'l1': False, 'alex': True}
 
 class GenericAAI(nn.Module):
-    def __init__(self, cfg):
+    def __init__(self, cfg, full_cfg):
         super().__init__()
-        self.autoenc = Autoencoder(cfg)
-        self.critic = Critic(cfg)
+        self.autoenc = Autoencoder(cfg, full_cfg)
+        self.critic = Critic(cfg, full_cfg)
         self.cfg = cfg
+        self.full_cfg = full_cfg
+        self.critic_criterion = loss_dict.get(self.cfg.critic_loss, nn.MSELoss())
+        self.autoenc_criterion = loss_dict.get(self.cfg.autoenc_loss, nn.MSELoss())
+        self.autoenc_unnorm = (lambda x: x) if not loss_norm[self.cfg.autoenc_loss] else (lambda x: unnormalize(x, tensor=True) * 2 - 1)
 
     def forward_autoenc(self, x, y):
         raise NotImplementedError
@@ -86,15 +104,9 @@ class GenericAAI(nn.Module):
     def forward_critic(self, *args):
         raise NotImplementedError
 
-class ACAI(nn.Module):
-    def __init__(self, cfg):
-        super().__init__()
-        self.autoenc = Autoencoder(cfg)
-        self.critic = Critic(cfg)
-        self.cfg = cfg
-        self.critic_criterion = loss_dict.get(self.cfg.critic_loss, nn.MSELoss())
-        self.autoenc_criterion = loss_dict.get(self.cfg.autoenc_loss, nn.MSELoss())
-        self.autoenc_unnorm = (lambda x: x) if not loss_norm[self.cfg.autoenc_loss] else (lambda x: unnormalize(x, tensor=True) * 2 - 1)
+class ACAI(GenericAAI):
+    def __init__(self, cfg, full_cfg):
+        super().__init__(cfg, full_cfg)
 
     def forward_autoenc(self, x, y):
         bs = x.shape[0]
@@ -115,15 +127,9 @@ class ACAI(nn.Module):
 from functools import reduce
 from einops import rearrange
 
-class AEAI(nn.Module):
-    def __init__(self, cfg):
-        super().__init__()
-        self.autoenc = Autoencoder(cfg)
-        self.critic = Critic(cfg)
-        self.cfg = cfg
-        self.critic_criterion = loss_dict.get(self.cfg.critic_loss, nn.MSELoss())
-        self.autoenc_criterion = loss_dict.get(self.cfg.autoenc_loss, nn.MSELoss())
-        self.autoenc_unnorm = (lambda x: x) if not loss_norm[self.cfg.autoenc_loss] else (lambda x: unnormalize(x, tensor=True) * 2 - 1)
+class AEAI(GenericAAI):
+    def __init__(self, cfg, full_cfg):
+        super().__init__(cfg, full_cfg)
 
     def forward_autoenc(self, x, y):
         bs = x.shape[0]

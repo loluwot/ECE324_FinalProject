@@ -60,7 +60,7 @@ class LitModel(pl.LightningModule):
         self.full_config = config
         self.config = LitModelCfg.parse_obj(config)
         # self.model = ACAI(self.config)
-        self.model = model_dict[self.config.architecture](self.config)
+        self.model = model_dict[self.config.architecture](self.config, self.full_config)
 
         self.automatic_optimization = False
     

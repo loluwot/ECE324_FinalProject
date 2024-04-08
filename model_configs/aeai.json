@@ -16,11 +16,12 @@
         512,
         512,
         "M",
-        512
+        512,
+        "L1024"
     ],
     "autoenc_lambda": 1e-2,
     "cycle_lambda": 1e-2,
-    "smooth_lambda": 1e-2,
+    "smooth_lambda": 1e-1,
     "autoenc_loss": "mse",
     "architecture": "aeai",
     "batch_size": 32,
