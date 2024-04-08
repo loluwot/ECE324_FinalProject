@@ -188,6 +188,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     # config_raw = (f := open(args.config)).read()
+    print({k: v for k, v in vars(args).items() if k != 'config' and v != None})
     cfg = TrainConfig.parse_obj({**json.load(open(args.config)), **{k: v for k, v in vars(args).items() if k != 'config' and v != None}})
     
     train(cfg)
