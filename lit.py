@@ -78,7 +78,7 @@ class LitModel(pl.LightningModule):
         a_opt, c_opt = self.optimizers()
         x_b, y_b = torch.tensor_split(batch, 2)
 
-        loss, *args = self.model.forward_autoenc(x_b, y_b)
+        (loss, loss_components), *args = self.model.forward_autoenc(x_b, y_b)
         a_opt.zero_grad()
         self.manual_backward(loss)
         a_opt.step()
@@ -89,6 +89,8 @@ class LitModel(pl.LightningModule):
         c_opt.step()
 
         self.log_dict({"autoenc_loss": loss, "critic_loss": c_loss}, prog_bar=True)
+        if len(loss_components):
+            self.log_dict({f'{k}_loss': v for k, v in loss_components.items()}, proj_bar=True)
         if ((self.current_epoch + 1) % self.config.check_samples_every_n_epochs == 0) and (batch_idx < self.config.visualize_n_batches):
             self._visualize_results(x_b, y_b)
 

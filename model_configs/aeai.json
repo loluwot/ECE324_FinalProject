@@ -24,7 +24,7 @@
     "autoenc_loss": "mse",
     "architecture": "aeai",
     "batch_size": 32,
-    "check_samples_every_n_epochs": 10,
+    "check_samples_every_n_epochs": 5,
     "checkpoint": true,
     "checkpoint_dir": "checkpoints/aeai_l2_5",
     "checkpoint_every_n_epochs": 10,

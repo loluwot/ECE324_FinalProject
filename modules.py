@@ -104,7 +104,7 @@ class ACAI(nn.Module):
         res = self.autoenc(x, y, alpha)
         loss += self.cfg.autoenc_lambda * self.critic(res).square().mean()
         # return loss, alpha, res, autoenc_y
-        return loss, y, res, alpha, autoenc_y
+        return (loss, dict()), y, res, alpha, autoenc_y
 
     def forward_critic(self, y, res, alpha, autoenc_y):
         loss = self.critic_criterion(self.critic(res.detach()).squeeze(), alpha.squeeze())
@@ -134,8 +134,7 @@ class AEAI(nn.Module):
         # RECON LOSS
         autoenc_y = self.autoenc(x, y, torch.zeros_like(alpha))
         autoenc_x = self.autoenc(y, x, torch.zeros_like(alpha))
-        loss = reduce(lambda x, y: x + y, [self.autoenc_criterion(*[self.autoenc_unnorm(z) for z in tup]).mean() for tup in zip([autoenc_y, autoenc_x], [y, x])])        
-        
+        recon_loss = reduce(lambda x, y: x + y, [self.autoenc_criterion(*[self.autoenc_unnorm(z) for z in tup]).mean() for tup in zip([autoenc_y, autoenc_x], [y, x])])        
         # SMOOTHNESS
         # if self.cfg.fast_gradient:
         #     res_z = self.autoenc.encoder_alpha(x, y, alpha) # B C H W
@@ -153,14 +152,15 @@ class AEAI(nn.Module):
         jacobian, (res, res_z) = torch.func.vmap(torch.func.jacfwd(function, has_aux=True))(alpha, x, y)
         # print(torch.gradient(rearrange(res_merged, '(b m) c h w -> b m c h w', m=M+1), spacing=(alpha[0].squeeze(),), dim=1)[0].shape)
         # print(jacobian - torch.gradient(rearrange(res_merged, '(b m) c h w -> b m c h w', m=M+1), spacing=(alpha[0].squeeze(),), dim=1)[0])
-        loss += (self.cfg.smooth_lambda * jacobian.square()).mean()
+        smoothness_loss = (self.cfg.smooth_lambda * jacobian.square()).mean()
 
         # ADVERSARIAL LOSS
-        loss -= self.cfg.autoenc_lambda * F.logsigmoid(self.critic(res)).mean()
+        adv_loss = -self.cfg.autoenc_lambda * F.logsigmoid(self.critic(res)).mean()
         
         # CYCLE CONSISTENCY
-        loss += self.cfg.cycle_lambda * (self.autoenc.encoder(self.autoenc.decoder(res_z)) - res_z).square().mean()
-        return loss, res, alpha, x, y
+        cycle_loss = self.cfg.cycle_lambda * (self.autoenc.encoder(self.autoenc.decoder(res_z)) - res_z).square().mean()
+        loss = recon_loss + smoothness_loss + adv_loss + cycle_loss
+        return (loss, {'recon':recon_loss, 'smoothness':smoothness_loss, 'adv':adv_loss, 'cycle':cycle_loss}), res, alpha, x, y
 
     def forward_critic(self, res, alpha, x, y):
         # alpha_mod = (0.5 - alpha).abs() * 2
