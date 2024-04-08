@@ -99,8 +99,7 @@ class LitModel(pl.LightningModule):
         N = self.config.visualize_n_samples
         samples = x_b[[0]], y_b[[0]]
         true_alpha = torch.linspace(1, 0, N).to(x_b)
-        results = self.model.autoenc(*[x.repeat(N, 1, 1, 1) for x in samples], true_alpha[(slice(None, None),) + (None,)*(x_b.ndim - 1)])
-        
+        results = self.model.autoenc(*[x.repeat(N, 1, 1, 1) for x in samples], true_alpha)
         wandb.log(
             {
                 "alpha": wandb.Table(
