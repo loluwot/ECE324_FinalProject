@@ -126,6 +126,36 @@ class ACAI(GenericAAI):
         res = self.critic(self.cfg.critic_gamma * y + (1 - self.cfg.critic_gamma) * autoenc_y.detach())#.abs().mean()
         loss += self.critic_criterion(res, torch.zeros_like(res))
         return loss
+
+
+class ACAIMod(GenericAAI):
+    def __init__(self, cfg, full_cfg):
+        super().__init__(cfg, full_cfg)
+
+    def forward_autoenc(self, x, y):
+        bs = x.shape[0]
+        x_z, y_z = self.autoenc.encoder(x), self.autoenc.encoder(y)
+        alpha = 0.5*torch.rand(bs, dtype=x.dtype, device=x.device)[(slice(None, None),) + (None,)*(x_z.ndim - 1)]
+        autoenc_y = self.autoenc.decoder(y_z)
+        recon_loss = self.autoenc_criterion(*[self.autoenc_unnorm(z) for z in [autoenc_y, y]]).mean()
+        
+        def function(alpha, x_z, y_z):
+            res = self.autoenc.decoder(alpha * x_z + (1 - alpha) * y_z)            
+            return res.flatten(), (res.squeeze(),)
+        
+        jacobian, (res,) = torch.func.vmap(torch.func.jacfwd(function, has_aux=True))(alpha, x_z, y_z)
+        smoothness_loss = (self.cfg.smooth_lambda * jacobian.square()).mean()
+
+        adv_loss = self.cfg.autoenc_lambda * self.critic(res).square().mean()        
+        loss = recon_loss + smoothness_loss + adv_loss
+
+        return (loss, dict({'recon': recon_loss, 'smoothness': smoothness_loss, 'adv': adv_loss})), y, res, alpha, autoenc_y
+
+    def forward_critic(self, y, res, alpha, autoenc_y):
+        loss = self.critic_criterion(self.critic(res.detach()).squeeze(), alpha.squeeze())
+        res = self.critic(self.cfg.critic_gamma * y + (1 - self.cfg.critic_gamma) * autoenc_y.detach())#.abs().mean()
+        loss += self.critic_criterion(res, torch.zeros_like(res))
+        return loss
    
 from functools import reduce
 from einops import rearrange
