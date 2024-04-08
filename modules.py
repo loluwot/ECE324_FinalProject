@@ -156,7 +156,7 @@ class AEAI(nn.Module):
             loss += bs * (self.cfg.smooth_lambda * jacobian.square()).mean()
 
         # ADVERSARIAL LOSS
-        loss -= bs * self.cfg.autoenc_lambda * (self.critic(res_merged).abs() + 1e-5).log().mean()
+        loss -= bs * self.cfg.autoenc_lambda * (self.critic(res_merged)).log().mean()
         
         # CYCLE CONSISTENCY
         loss += bs * self.cfg.cycle_lambda * (self.autoenc.encoder(self.autoenc.decoder(res_z_merged)) - res_z_merged).square().mean()
