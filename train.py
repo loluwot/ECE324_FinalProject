@@ -21,6 +21,7 @@ from datetime import timedelta
 import json
 from collections import defaultdict
 import numpy as np
+from lightning.pytorch.tuner import Tuner
 
 dtype_dict = defaultdict(lambda : None, {'16-mixed': np.float16})
 
@@ -39,6 +40,7 @@ class TrainConfig(LitModelCfg):
     debug_single : bool = False
     accumulate_grad_batches : int = 1
     swa : bool = False
+    auto_batch_size : bool = True
 
     precision : Optional[str] = '16-mixed'
 
@@ -160,6 +162,10 @@ def train(cfg):
         accumulate_grad_batches=cfg.accumulate_grad_batches,
         precision=cfg.precision
     )
+
+    tuner = Tuner(trainer)
+    if cfg.auto_batch_size:
+        tuner.scale_batch_size(model, mode="power")
 
     ckpt_path = ckpt_dir / "last.ckpt"
     ckpt_path = str(ckpt_path) if ckpt_path.exists() else None
