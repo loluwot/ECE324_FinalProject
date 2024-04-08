@@ -26,7 +26,7 @@
     "batch_size": 32,
     "check_samples_every_n_epochs": 10,
     "checkpoint": true,
-    "checkpoint_dir": "checkpoints/aeai_l2_3",
+    "checkpoint_dir": "checkpoints/aeai_l2_4",
     "checkpoint_every_n_epochs": 10,
     "checkpoint_every_n_min": 10,
     "critic": [
@@ -75,5 +75,6 @@
     "wandb_run_id": null,
     "wandb_run_name": null,
 
-    "optimizer": "radam"
+    "optimizer": "adam",
+    "fast_gradient": false
 }

@@ -127,46 +127,47 @@ class AEAI(nn.Module):
 
     def forward_autoenc(self, x, y):
         bs = x.shape[0]
-        M = self.cfg.M
-        alpha = ((torch.arange(M + 1) / M) * torch.ones((bs, 1)))[(Ellipsis,) + (None,)*3].to(x) # B M 1 1 1
+        # M = self.cfg.M
+        # alpha = ((torch.arange(M + 1) / M) * torch.ones((bs, 1)))[(Ellipsis,) + (None,)*3].to(x) # B M 1 1 1
+        alpha = torch.rand(bs, 1, 1, 1).to(x) # B 1 1 1
 
         # RECON LOSS
-        autoenc_y = self.autoenc(x, y, alpha[:, 0])
-        autoenc_x = self.autoenc(y, x, alpha[:, 0])
+        autoenc_y = self.autoenc(x, y, torch.zeros_like(alpha))
+        autoenc_x = self.autoenc(y, x, torch.zeros_like(alpha))
         loss = reduce(lambda x, y: x + y, [self.autoenc_criterion(*[self.autoenc_unnorm(z) for z in tup]).mean() for tup in zip([autoenc_y, autoenc_x], [y, x])])        
         
         # SMOOTHNESS
-        if self.cfg.fast_gradient:
-            res_z = self.autoenc.encoder_alpha(x[:, None], y[:, None], alpha) # B M C H W
-            res_z_merged = rearrange(res_z, 'b m c h w -> (b m) c h w')
-            res_merged = self.autoenc.decoder(res_z_merged)
-            loss += self.cfg.smooth_lambda * torch.gradient(rearrange(res_merged, '(b m) c h w -> b m c h w', m=M+1), spacing=(alpha[0].squeeze(),), dim=1)[0].square().mean()
-        else:
+        # if self.cfg.fast_gradient:
+        #     res_z = self.autoenc.encoder_alpha(x, y, alpha) # B C H W
+        #     # res_z_merged = rearrange(res_z, 'b m c h w -> (b m) c h w')
+        #     res = self.autoenc.decoder(res_z)
+        #     loss += self.cfg.smooth_lambda * torch.gradient(rearrange(res, '(b m) c h w -> b m c h w', m=M+1), spacing=(alpha[0].squeeze(),), dim=1)[0].square().mean()
+        # else:
             ## SLOW BUT ACCURATE GRADIENT CALC ###
-            def function(alpha, x, y):
-                res_z_merged = self.autoenc.encoder_alpha(x[None], y[None], alpha[None])#.squeeze()
-                res_merged = self.autoenc.decoder(res_z_merged)            
-                return res_merged.flatten(), (res_merged.squeeze(), res_z_merged.squeeze())
-            
-            x_exp, y_exp = [xx.repeat_interleave((M + 1), dim=0) for xx in (x, y)]
-            jacobian, (res_merged, res_z_merged) = torch.func.vmap(torch.func.jacfwd(function, has_aux=True))(alpha.reshape(-1, 1, 1, 1), x_exp, y_exp)
-            # print(torch.gradient(rearrange(res_merged, '(b m) c h w -> b m c h w', m=M+1), spacing=(alpha[0].squeeze(),), dim=1)[0].shape)
-            # print(jacobian - torch.gradient(rearrange(res_merged, '(b m) c h w -> b m c h w', m=M+1), spacing=(alpha[0].squeeze(),), dim=1)[0])
-            loss += (self.cfg.smooth_lambda * jacobian.square()).mean()
+        def function(alpha, x, y):
+            res_z = self.autoenc.encoder_alpha(x[None], y[None], alpha[None])#.squeeze()
+            res = self.autoenc.decoder(res_z)            
+            return res.flatten(), (res.squeeze(), res_z.squeeze())
+        
+        # x_exp, y_exp = [xx.repeat_interleave((M + 1), dim=0) for xx in (x, y)]
+        jacobian, (res, res_z) = torch.func.vmap(torch.func.jacfwd(function, has_aux=True))(alpha, x, y)
+        # print(torch.gradient(rearrange(res_merged, '(b m) c h w -> b m c h w', m=M+1), spacing=(alpha[0].squeeze(),), dim=1)[0].shape)
+        # print(jacobian - torch.gradient(rearrange(res_merged, '(b m) c h w -> b m c h w', m=M+1), spacing=(alpha[0].squeeze(),), dim=1)[0])
+        loss += (self.cfg.smooth_lambda * jacobian.square()).mean()
 
         # ADVERSARIAL LOSS
-        loss -= self.cfg.autoenc_lambda * F.logsigmoid(self.critic(res_merged)).mean()
+        loss -= self.cfg.autoenc_lambda * F.logsigmoid(self.critic(res)).mean()
         
         # CYCLE CONSISTENCY
-        loss += self.cfg.cycle_lambda * (self.autoenc.encoder(self.autoenc.decoder(res_z_merged)) - res_z_merged).square().mean()
-        return loss, res_merged, alpha, x, y
+        loss += self.cfg.cycle_lambda * (self.autoenc.encoder(self.autoenc.decoder(res_z)) - res_z).square().mean()
+        return loss, res, alpha, x, y
 
     def forward_critic(self, res, alpha, x, y):
         # alpha_mod = (0.5 - alpha).abs() * 2
         # loss = self.critic_criterion(self.critic(res.detach()).squeeze(), alpha_mod.flatten())
-        t = torch.ones_like(alpha)
-        t[:, 1:-1] = 0.
-        loss = F.binary_cross_entropy_with_logits((pred := self.critic(res.detach()).squeeze()), t.flatten())
+        # t = torch.ones_like(alpha)
+        # t[:, 1:-1] = 0.
+        loss = F.binary_cross_entropy_with_logits((pred := self.critic(res.detach()).squeeze()), torch.zeros_like(pred))
         loss += F.binary_cross_entropy_with_logits((pred := self.critic(torch.cat([x, y], axis=0))), torch.ones_like(pred))
         return loss
 
