@@ -38,8 +38,8 @@ def make_layers(cfg, batch_norm: bool = True, invert=False, running=True):
 class Autoencoder(nn.Module):
     def __init__(self, cfg):
         super().__init__()
-        self.encoder = make_layers(cfg.autoenc, running=self.cfg.fast_gradient)
-        self.decoder = make_layers(cfg.autoenc, invert=True, running=self.cfg.fast_gradient)
+        self.encoder = make_layers(cfg.autoenc, running=cfg.fast_gradient)
+        self.decoder = make_layers(cfg.autoenc, invert=True, running=cfg.fast_gradient)
 
     def encoder_alpha(self, x, y, alpha=0.):
         if x.ndim == 5:
