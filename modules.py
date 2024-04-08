@@ -159,14 +159,15 @@ class AEAI(nn.Module):
         
         # CYCLE CONSISTENCY
         loss += self.cfg.cycle_lambda * (self.autoenc.encoder(self.autoenc.decoder(res_z_merged)) - res_z_merged).square().mean()
-        return loss, res_merged, alpha
+        return loss, res_merged, alpha, x, y
 
-    def forward_critic(self, res, alpha):
+    def forward_critic(self, res, alpha, x, y):
         # alpha_mod = (0.5 - alpha).abs() * 2
         # loss = self.critic_criterion(self.critic(res.detach()).squeeze(), alpha_mod.flatten())
         t = torch.ones_like(alpha)
         t[:, 1:-1] = 0.
         loss = F.cross_entropy((pred := self.critic(res.detach()).squeeze()), t.flatten())
+        loss += F.cross_entropy((pred := self.critic(torch.cat([x, y], axis=0))), torch.ones_like(pred))
         print(pred, t.flatten())
         return loss
 
