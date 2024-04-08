@@ -133,11 +133,9 @@ class AEAI(nn.Module):
         # RECON LOSS
         autoenc_y = self.autoenc(x, y, alpha[:, 0])
         autoenc_x = self.autoenc(y, x, alpha[:, 0])
-        loss = reduce(lambda x, y: x + y, [self.autoenc_criterion(*[self.autoenc_unnorm(z) for z in tup]).mean() for tup in zip([autoenc_y, autoenc_x], [y, x])])
-        print('RECON LOSS', loss)
+        loss = reduce(lambda x, y: x + y, [self.autoenc_criterion(*[self.autoenc_unnorm(z) for z in tup]).mean() for tup in zip([autoenc_y, autoenc_x], [y, x])])        
         
         # SMOOTHNESS
-
         if self.cfg.fast_gradient:
             res_z = self.autoenc.encoder_alpha(x[:, None], y[:, None], alpha) # B M C H W
             res_z_merged = rearrange(res_z, 'b m c h w -> (b m) c h w')
