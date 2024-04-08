@@ -6,7 +6,7 @@ import torch.nn.functional as F
 import pydantic
 from pydantic import BaseModel
 
-from modules import ACAI, AEAI
+from modules import ACAI, AEAI, ACAIMod
 
 from typing import List, Union
 from torchvision.utils import make_grid
@@ -14,7 +14,7 @@ from datamodule import unnormalize
 
 import wandb
 
-model_dict = {'acai': ACAI, 'aeai': AEAI}
+model_dict = {'acai': ACAI, 'aeai': AEAI, 'acai_mod': ACAIMod}
 optimizer_dict = {'adam': torch.optim.Adam, 'radam': torch.optim.RAdam}
 
 class LitModelCfg(BaseModel):
