@@ -167,6 +167,7 @@ def train(cfg):
 
     return 0
 
+import argparse
 def add_model(parser, model):
     fields = model.__fields__
     for name, field in fields.items():
