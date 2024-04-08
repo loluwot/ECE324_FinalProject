@@ -115,7 +115,7 @@ class ACAI(GenericAAI):
         alpha = 0.5*torch.rand(bs, dtype=x.dtype, device=x.device)[(slice(None, None),) + (None,)*(x_z.ndim - 1)]
         autoenc_y = self.autoenc.decoder(y_z)
         loss = self.autoenc_criterion(*[self.autoenc_unnorm(z) for z in [autoenc_y, y]]).mean()
-        res = self.decoder(alpha * x_z + (1 - alpha) * y_z)
+        res = self.autoenc.decoder(alpha * x_z + (1 - alpha) * y_z)
         loss += self.cfg.autoenc_lambda * self.critic(res).square().mean()
         # return loss, alpha, res, autoenc_y
         return (loss, dict()), y, res, alpha, autoenc_y
