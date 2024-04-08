@@ -54,6 +54,8 @@ class AFHQDataset(Dataset):
 class AFHQDataModule(pl.LightningDataModule):
     def __init__(self, base_dataset, num_workers=1, batch_size=32, shuffle=True):
         super().__init__()
+        self.save_hyperparameters()
+        
         self.base_dataset = base_dataset
         self.num_workers = num_workers
         self.batch_size = batch_size
@@ -62,7 +64,7 @@ class AFHQDataModule(pl.LightningDataModule):
     def train_dataloader(self):
         return DataLoader(
             dataset = self.base_dataset,
-            batch_size = self.batch_size,
+            batch_size = self.batch_size | self.hparam.batch_size,
             num_workers = self.num_workers,
             pin_memory = True,
             shuffle = self.shuffle
