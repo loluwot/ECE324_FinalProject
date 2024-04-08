@@ -62,7 +62,7 @@
     "normalize": true,
     "num_nodes": 1,
     "num_workers": 8,
-    "precision": "full",
+    "precision": "32",
     "progress_bar": true,
     "seed": 42,
     "strategy": "auto",
