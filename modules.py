@@ -137,16 +137,21 @@ class AEAI(nn.Module):
         print('RECON LOSS', loss)
         
         # SMOOTHNESS
-        # loss += self.cfg.smooth_lambda * torch.gradient(rearrange(res_merged, '(b m) c h w -> b m c h w', m=M+1), spacing=(alpha[0].squeeze(),), dim=1)[0].square().mean()
+        loss += self.cfg.smooth_lambda * torch.gradient(rearrange(res_merged, '(b m) c h w -> b m c h w', m=M+1), spacing=(alpha[0].squeeze(),), dim=1)[0].square().mean()
         
-        def function(alpha, x, y):
-            res_z_merged = self.autoenc.encoder_alpha(x[None], y[None], alpha[None])#.squeeze()
-            res_merged = self.autoenc.decoder(res_z_merged)            
-            return res_merged.flatten(), (res_merged.squeeze(), res_z_merged.squeeze())
+
+        ### SLOW BUT ACCURATE GRADIENT CALC ###
+        # def function(alpha, x, y):
+        #     res_z_merged = self.autoenc.encoder_alpha(x[None], y[None], alpha[None])#.squeeze()
+        #     res_merged = self.autoenc.decoder(res_z_merged)            
+        #     return res_merged.flatten(), (res_merged.squeeze(), res_z_merged.squeeze())
         
-        x_exp, y_exp = [xx.repeat_interleave((M + 1), dim=0) for xx in (x, y)]
-        jacobian, (res_merged, res_z_merged) = torch.func.vmap(torch.func.jacfwd(function, has_aux=True))(alpha.reshape(-1, 1, 1, 1), x_exp, y_exp)
-        loss += (self.cfg.smooth_lambda * jacobian.square()).mean()
+        # x_exp, y_exp = [xx.repeat_interleave((M + 1), dim=0) for xx in (x, y)]
+        # jacobian, (res_merged, res_z_merged) = torch.func.vmap(torch.func.jacfwd(function, has_aux=True))(alpha.reshape(-1, 1, 1, 1), x_exp, y_exp)
+        # # print(torch.gradient(rearrange(res_merged, '(b m) c h w -> b m c h w', m=M+1), spacing=(alpha[0].squeeze(),), dim=1)[0].shape)
+        # print(jacobian.reshape(2, 11, 3, 128, 128) - torch.gradient(rearrange(res_merged, '(b m) c h w -> b m c h w', m=M+1), spacing=(alpha[0].squeeze(),), dim=1)[0])
+        # # print(jacobian - torch.gradient(rearrange(res_merged, '(b m) c h w -> b m c h w', m=M+1), spacing=(alpha[0].squeeze(),), dim=1)[0])
+        # loss += (self.cfg.smooth_lambda * jacobian.square()).mean()
 
         # ADVERSARIAL LOSS
         res_z = self.autoenc.encoder_alpha(x[:, None], y[:, None], alpha) # B M C H W
@@ -156,8 +161,6 @@ class AEAI(nn.Module):
         
         # CYCLE CONSISTENCY
         loss += self.cfg.cycle_lambda * (self.autoenc.encoder(self.autoenc.decoder(res_z_merged)) - res_z_merged).square().mean()
-
-
         return loss, res_merged, alpha, autoenc_y
 
     def forward_critic(self, res, alpha, autoenc_y):
