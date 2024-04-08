@@ -133,14 +133,14 @@ class AEAI(nn.Module):
         # RECON LOSS
         autoenc_y = self.autoenc(x, y, alpha[:, 0])
         autoenc_x = self.autoenc(y, x, alpha[:, 0])
-        loss = reduce(lambda x, y: x + y, [self.autoenc_criterion(*[self.autoenc_unnorm(z) for z in tup]).mean() for tup in zip([autoenc_y, autoenc_x], [y, x])])        
+        loss = reduce(lambda x, y: x + y, [self.autoenc_criterion(*[self.autoenc_unnorm(z) for z in tup]).sum() for tup in zip([autoenc_y, autoenc_x], [y, x])])        
         
         # SMOOTHNESS
         if self.cfg.fast_gradient:
             res_z = self.autoenc.encoder_alpha(x[:, None], y[:, None], alpha) # B M C H W
             res_z_merged = rearrange(res_z, 'b m c h w -> (b m) c h w')
             res_merged = self.autoenc.decoder(res_z_merged)
-            loss += self.cfg.smooth_lambda * torch.gradient(rearrange(res_merged, '(b m) c h w -> b m c h w', m=M+1), spacing=(alpha[0].squeeze(),), dim=1)[0].square().mean()
+            loss += bs * self.cfg.smooth_lambda * torch.gradient(rearrange(res_merged, '(b m) c h w -> b m c h w', m=M+1), spacing=(alpha[0].squeeze(),), dim=1)[0].square().mean()
         else:
             ## SLOW BUT ACCURATE GRADIENT CALC ###
             def function(alpha, x, y):
@@ -153,18 +153,21 @@ class AEAI(nn.Module):
             # print(torch.gradient(rearrange(res_merged, '(b m) c h w -> b m c h w', m=M+1), spacing=(alpha[0].squeeze(),), dim=1)[0].shape)
             print(jacobian.reshape(2, 11, 3, 128, 128) - torch.gradient(rearrange(res_merged, '(b m) c h w -> b m c h w', m=M+1), spacing=(alpha[0].squeeze(),), dim=1)[0])
             # print(jacobian - torch.gradient(rearrange(res_merged, '(b m) c h w -> b m c h w', m=M+1), spacing=(alpha[0].squeeze(),), dim=1)[0])
-            loss += (self.cfg.smooth_lambda * jacobian.square()).mean()
+            loss += bs * (self.cfg.smooth_lambda * jacobian.square()).mean()
 
         # ADVERSARIAL LOSS
-        loss -= self.cfg.autoenc_lambda * (self.critic(res_merged).abs() + 1e-5).log().mean()
+        loss -= bs * self.cfg.autoenc_lambda * (self.critic(res_merged).abs() + 1e-5).log().mean()
         
         # CYCLE CONSISTENCY
-        loss += self.cfg.cycle_lambda * (self.autoenc.encoder(self.autoenc.decoder(res_z_merged)) - res_z_merged).square().mean()
-        return loss, res_merged, alpha, autoenc_y
+        loss += bs * self.cfg.cycle_lambda * (self.autoenc.encoder(self.autoenc.decoder(res_z_merged)) - res_z_merged).square().mean()
+        return loss, res_merged, alpha, x, y
 
-    def forward_critic(self, res, alpha, autoenc_y):
-        alpha_mod = (0.5 - alpha).abs() * 2
-        loss = self.critic_criterion(self.critic(res.detach()).squeeze(), alpha_mod.flatten())
+    def forward_critic(self, res, alpha, x, y):
+        # alpha_mod = (0.5 - alpha).abs() * 2
+        # loss = self.critic_criterion(self.critic(res.detach()).squeeze(), alpha_mod.flatten())
+        loss = F.cross_entropy((pred := self.critic(res.detach()).squeeze()), torch.zeros_like(pred))
+        loss += F.cross_entropy((pred := self.critic(torch.cat([x, y], axis=0)).squeeze()), torch.ones_like(pred))
+
         return loss
 
 
