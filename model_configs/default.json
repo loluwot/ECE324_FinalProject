@@ -24,7 +24,7 @@
     "batch_size": 32,
     "check_samples_every_n_epochs": 10,
     "checkpoint": true,
-    "checkpoint_dir": "acai_l2",
+    "checkpoint_dir": "acai_l2_2",
     "checkpoint_every_n_epochs": 10,
     "checkpoint_every_n_min": 10,
     "critic": [
