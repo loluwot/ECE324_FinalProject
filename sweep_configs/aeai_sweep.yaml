@@ -17,7 +17,7 @@ parameters:
   optimizer:
     values: ["adam", "radam"]
   max_epochs:
-    value: 100
+    value: 15
   autoenc_loss:
     values: ["alex", "mse"]
   cycle_lambda:
@@ -28,3 +28,5 @@ parameters:
     distribution: log_uniform_values
     max: 5e-2
     min: 1e-3
+  checkpoint:
+    value: false
