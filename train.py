@@ -83,7 +83,7 @@ class TrainConfig(LitModelCfg):
 def train(cfg):
     if cfg.sweep:
         wandb.init()
-        cfg = TrainConfig.parse_obj(cfg.model_dump() | wandb.config)
+        cfg = TrainConfig.parse_obj(cfg.dict() | wandb.config)
 
     pl.seed_everything(cfg.seed, workers=True)
 
