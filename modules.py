@@ -72,7 +72,7 @@ class Critic(nn.Module):
     def __init__(self, cfg, full_cfg):
         super().__init__()
         self.classifier = nn.Sequential(
-            make_layers(cfg.critic, input_shape=(3, full_cfg['im_size'], full_cfg['im_size']))[0],
+            make_layers(cfg.critic, input_shape=(3, full_cfg['im_size'], full_cfg['im_size']), config=cfg)[0],
             nn.AdaptiveAvgPool2d((cfg.critic_psize, cfg.critic_psize)),
             nn.Flatten(),
             nn.Linear(int(cfg.critic[-1]) * cfg.critic_psize ** 2, cfg.critic_hidden),
