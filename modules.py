@@ -171,7 +171,7 @@ class AEAI(GenericAAI):
         bs = x.shape[0]
         # M = self.cfg.M
         # alpha = ((torch.arange(M + 1) / M) * torch.ones((bs, 1)))[(Ellipsis,) + (None,)*3].to(x) # B M 1 1 1
-        alpha = torch.rand(bs).to(x) # B 1 1 1
+        alpha = torch.rand(bs).to(x) # B
 
         # RECON LOSS
         autoenc_y = self.autoenc.decoder(self.autoenc.encoder(y))
@@ -193,9 +193,8 @@ class AEAI(GenericAAI):
         # # # print(jacobian - torch.gradient(rearrange(res_merged, '(b m) c h w -> b m c h w', m=M+1), spacing=(alpha[0].squeeze(),), dim=1)[0])
         # smoothness_loss = (self.cfg.smooth_lambda * jacobian.square()).mean()
         smoothness_loss = 0.
-        # res_z = self.autoenc.encoder_alpha(x, y, alpha) # B C H W
-        # res_z_merged = rearrange(res_z, 'b m c h w -> (b m) c h w')
-        # res = self.autoenc.decoder(res_z)
+        res_z = self.autoenc.encoder_alpha(x, y, alpha) # B C H W
+        res = self.autoenc.decoder(res_z)
 
         # ADVERSARIAL LOSS
         adv_loss = -self.cfg.autoenc_lambda * F.logsigmoid(self.critic(res)).mean()
