@@ -75,9 +75,9 @@ class TrainConfig(LitModelCfg):
     ##### HPARAM SWEEP ####
     sweep : bool = False
 
-    class Config(pydantic_cli.DefaultConfig):
-        extra = "forbid"
-        CLI_BOOL_PREFIX = ("--enable_", "--disable_")
+    # class Config(pydantic_cli.DefaultConfig):
+    #     extra = "forbid"
+    #     CLI_BOOL_PREFIX = ("--enable_", "--disable_")
 
 
 def train(cfg):
