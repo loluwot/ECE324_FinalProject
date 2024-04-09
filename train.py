@@ -12,7 +12,7 @@ from typing import List, Optional
 import pathlib
 from pathlib import Path
 # import pydantic_cli
-import pydantic_yaml
+# import pydantic_yaml
 from pydantic import BaseModel, Field
 
 import uuid

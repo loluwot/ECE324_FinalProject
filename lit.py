@@ -74,8 +74,6 @@ class LitModel(pl.LightningModule):
     
     def training_step(self, batch, batch_idx):
 
-        # torch.cuda.empty_cache()
-
         a_opt, c_opt = self.optimizers()
         x_b, y_b = torch.tensor_split(batch, 2)
 
@@ -84,7 +82,7 @@ class LitModel(pl.LightningModule):
         self.manual_backward(loss)
         a_opt.step()
 
-        c_loss = self.model.forward_critic(*args)
+        c_loss, c_loss_components = self.model.forward_critic(*args)
         c_opt.zero_grad()
         self.manual_backward(c_loss)
         c_opt.step()
@@ -92,6 +90,8 @@ class LitModel(pl.LightningModule):
         self.log_dict({"autoenc_loss": loss, "critic_loss": c_loss}, prog_bar=True)
         if len(loss_components):
             self.log_dict({f'{k}_loss': v for k, v in loss_components.items()}, prog_bar=True)
+        if len(c_loss_components):
+            self.log_dict({f'{k}_loss': v for k, v in c_loss_components.items()}, prog_bar=True)
         if ((self.current_epoch + 1) % self.config.check_samples_every_n_epochs == 0) and (batch_idx < self.config.visualize_n_batches):
             self._visualize_results(x_b, y_b)
 
@@ -100,11 +100,13 @@ class LitModel(pl.LightningModule):
         N = self.config.visualize_n_samples
         samples = x_b[[0]], y_b[[0]]
         true_alpha = torch.linspace(1, 0, N).to(x_b)
+        # true_alpha_log = F.pad(true_alpha, (1, 1), 'constant', 1)
         results = self.model.autoenc(*[x.repeat(N, 1, 1, 1) for x in samples], true_alpha)
+        results_log = torch.cat([samples[0], results, samples[1]], axis=0)
         wandb.log(
             {
                 "alpha": wandb.Table(
-                    data = torch.stack([0.5 - torch.abs(0.5 - true_alpha), (nn.Identity() if self.config.architecture == 'acai' else nn.Sigmoid())(self.model.critic(results).squeeze())], axis=-1).cpu().numpy(), 
+                    data = torch.stack([F.pad(torch.abs(0.5 - true_alpha), (1, 1), 'constant', 1), (nn.Identity() if self.config.architecture == 'acai' else nn.Sigmoid())(self.model.critic(results_log).squeeze())], axis=-1).cpu().numpy(), 
                     columns = ['target', 'prediction']
                 )
             }

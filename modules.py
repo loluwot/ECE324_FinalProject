@@ -127,7 +127,7 @@ class ACAI(GenericAAI):
         loss = self.critic_criterion(self.critic(res.detach()).squeeze(), alpha.squeeze())
         res = self.critic(self.cfg.critic_gamma * y + (1 - self.cfg.critic_gamma) * autoenc_y.detach())#.abs().mean()
         loss += self.critic_criterion(res, torch.zeros_like(res))
-        return loss
+        return (loss, dict())
 
 
 class ACAIMod(GenericAAI):
@@ -158,7 +158,7 @@ class ACAIMod(GenericAAI):
         loss = self.critic_criterion(self.critic(res.detach()).squeeze(), alpha.squeeze())
         res = self.critic(self.cfg.critic_gamma * y + (1 - self.cfg.critic_gamma) * autoenc_y.detach())#.abs().mean()
         loss += self.critic_criterion(res, torch.zeros_like(res))
-        return loss
+        return (loss, dict())
    
 from functools import reduce
 from einops import rearrange
@@ -205,12 +205,8 @@ class AEAI(GenericAAI):
         return (loss, {'recon':recon_loss, 'smoothness':smoothness_loss, 'adv':adv_loss, 'cycle':cycle_loss}), res, alpha, x, y
 
     def forward_critic(self, res, alpha, x, y):
-        # alpha_mod = (0.5 - alpha).abs() * 2
-        # loss = self.critic_criterion(self.critic(res.detach()).squeeze(), alpha_mod.flatten())
-        # t = torch.ones_like(alpha)
-        # t[:, 1:-1] = 0.
-        loss = F.binary_cross_entropy_with_logits((pred := self.critic(res.detach()).squeeze()), torch.zeros_like(pred))
-        loss += F.binary_cross_entropy_with_logits((pred := self.critic(torch.cat([x, y], axis=0))), torch.ones_like(pred))
-        return loss
+        loss = 2 * F.binary_cross_entropy_with_logits((pred := self.critic(res.detach()).squeeze()), torch.zeros_like(pred))
+        loss_2 = F.binary_cross_entropy_with_logits((pred := self.critic(torch.cat([x, y], axis=0))), torch.ones_like(pred))
+        return loss + loss_2, {'neg_crit': loss, 'pos_crit': loss_2}
 
 
