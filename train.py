@@ -205,7 +205,7 @@ if __name__ == "__main__":
     add_model(parser, TrainConfig)
     args = parser.parse_args()
 
-    total_config = json.load(open(args.config)) | {k: v for k, v in vars(args).items() if k != 'config' and v != None}
+    total_config = json.load(open(args.config)) | {k: v for k, v in vars(args).items() if k not in ['config', 'sweep_config', 'sweep_count'] and v != None}
     cfg = TrainConfig.parse_obj(total_config)
     if args.sweep_config != None:
         total_config |= {'sweep': True}
