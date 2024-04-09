@@ -195,6 +195,7 @@ def add_model(parser, model):
 if __name__ == "__main__":
 
     import yaml
+    import wandb
 
     ### SWEEP CONTROLLER
     from argparse import ArgumentParser
