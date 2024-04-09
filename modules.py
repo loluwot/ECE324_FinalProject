@@ -141,9 +141,10 @@ class ACAIMod(GenericAAI):
         
         def function(alpha, x_z, y_z):
             res = self.autoenc.decoder((alpha * x_z + (1 - alpha) * y_z)[None])            
-            return res.flatten(), (res.squeeze(),)
+            return res.flatten()
         
-        jacobian, (res,) = torch.func.vmap(torch.func.jacfwd(function, has_aux=True))(alpha, x_z, y_z)
+        res = self.autoenc.decoder(alpha * x_z + (1 - alpha) * y_z)
+        jacobian = torch.func.vmap(torch.func.jacfwd(function))(alpha, x_z, y_z)
         # smoothness_loss = (self.cfg.smooth_lambda * jacobian.square()).mean()
         smoothness_loss = 0.
 
