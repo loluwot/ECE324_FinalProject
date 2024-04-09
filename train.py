@@ -209,7 +209,8 @@ if __name__ == "__main__":
     cfg = TrainConfig.parse_obj(total_config)
     if args.sweep_config != None:
         total_config |= {'sweep': True}
-        sweep_configuration = yaml.load(open(args.sweep_config))
+        with open(args.sweep_config) as stream:
+            sweep_configuration = yaml.safe_load(stream)
         sweep_id = wandb.sweep(sweep=sweep_configuration, project=total_config.get('wandb_project', 'generic_sweep'))
         cfg = TrainConfig.parse_obj(total_config)
         wandb.agent(sweep_id, function=lambda : train(cfg), count=args.sweep_count)
