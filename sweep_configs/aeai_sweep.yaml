@@ -1,0 +1,30 @@
+name: sweepdemo
+method: random
+metric:
+  goal: minimize
+  name: autoenc_loss
+parameters:
+  lr_autoenc:
+    distribution: log_uniform_values
+    max: 1e-2
+    min: 1e-5
+  lr_critic:
+    distribution: log_uniform_values
+    max: 1e-2
+    min: 1e-5
+  batch_size:
+    values: [16, 32, 64]
+  optimizer:
+    values: ["adam", "radam"]
+  max_epochs:
+    value: 100
+  autoenc_loss:
+    values: ["alex", "mse"]
+  cycle_lambda:
+    distribution: log_uniform_values
+    max: 5e-2
+    min: 1e-3
+  autoenc_lambda:
+    distribution: log_uniform_values
+    max: 5e-2
+    min: 1e-3

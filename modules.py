@@ -200,7 +200,7 @@ class AEAI(GenericAAI):
         adv_loss = -self.cfg.autoenc_lambda * F.logsigmoid(self.critic(res)).mean()
         
         # CYCLE CONSISTENCY
-        cycle_loss = self.cfg.cycle_lambda * (self.autoenc.encoder(self.autoenc.decoder(res_z)) - res_z).square().mean()
+        cycle_loss = self.cfg.cycle_lambda * (self.autoenc.encoder(res) - res_z).square().mean()
         loss = recon_loss + smoothness_loss + adv_loss + cycle_loss
         return (loss, {'recon':recon_loss, 'smoothness':smoothness_loss, 'adv':adv_loss, 'cycle':cycle_loss}), res, alpha, x, y
 

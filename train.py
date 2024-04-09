@@ -72,6 +72,8 @@ class TrainConfig(LitModelCfg):
     debug_single : bool = False
     debug_num : int = 1
     
+    ##### HPARAM SWEEP ####
+    sweep : bool = False
 
     class Config(pydantic_cli.DefaultConfig):
         extra = "forbid"
@@ -79,8 +81,12 @@ class TrainConfig(LitModelCfg):
 
 
 def train(cfg):
+    if cfg.sweep:
+        wandb.init()
+        cfg = TrainConfig.parse_obj(cfg.model_dump() | wandb.config)
+
     pl.seed_everything(cfg.seed, workers=True)
-    
+
     if cfg.checkpoint_dir is None:  # set to some random unique folder
         rand_dir = pathlib.Path(__file__).parents[0] / "checkpoints" / str(uuid.uuid4())
         assert not rand_dir.exists()
@@ -187,18 +193,29 @@ def add_model(parser, model):
         )
     
 if __name__ == "__main__":
-    
+
+    import yaml
+
+    ### SWEEP CONTROLLER
     from argparse import ArgumentParser
     parser = ArgumentParser()
     parser.add_argument('config', type=str)
-    
+    parser.add_argument('--sweep_config', type=str, default=None)
+    parser.add_argument('--sweep_count', type=int, default=0)
     add_model(parser, TrainConfig)
     args = parser.parse_args()
-    
+
+    total_config = json.load(open(args.config)) | {k: v for k, v in vars(args).items() if k != 'config' and v != None}
+    cfg = TrainConfig.parse_obj(total_config)
+    if args.sweep_config != None:
+        total_config |= {'sweep': True}
+        sweep_configuration = yaml.load(open(args.sweep_config))
+        sweep_id = wandb.sweep(sweep=sweep_configuration, project=total_config.get('wandb_project', 'generic_sweep'))
+        cfg = TrainConfig.parse_obj(total_config)
+        wandb.agent(sweep_id, function=lambda : train(cfg), count=args.sweep_count)
+    else:
+        train(cfg)
+
     # config_raw = (f := open(args.config)).read()
-    print({k: v for k, v in vars(args).items() if k != 'config' and v != None})
-    cfg = TrainConfig.parse_obj({**json.load(open(args.config)), **{k: v for k, v in vars(args).items() if k != 'config' and v != None}})
-    
-    train(cfg)
     # pydantic_cli.run_and_exit(TrainConfig, train)
 
