@@ -146,8 +146,8 @@ class ACAIMod(GenericAAI):
             return res.flatten(), (res.squeeze(),)
         
         jacobian, (res,) = torch.func.vmap(torch.func.jacfwd(function, has_aux=True))(alpha, x_z, y_z)
-        # smoothness_loss = (self.cfg.smooth_lambda * jacobian.square()).mean()
-        smoothness_loss = 0.
+        smoothness_loss = (self.cfg.smooth_lambda * jacobian.square()).mean()
+        # smoothness_loss = 0.
 
         adv_loss = self.cfg.autoenc_lambda * self.critic(res).square().mean()        
         loss = recon_loss + smoothness_loss + adv_loss
