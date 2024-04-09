@@ -13,6 +13,8 @@ from datamodule import unnormalize
 import lpips
 from einops.layers.torch import Rearrange
 
+norm_dict = {'batch': nn.BatchNorm2d, 'instance': nn.InstanceNorm2d}
+
 def make_layers(cfg, input_shape=(0,0,0), shapes=None, batch_norm: bool = True, invert=False, running=True):
     
     cur_shape = input_shape
@@ -41,7 +43,7 @@ def make_layers(cfg, input_shape=(0,0,0), shapes=None, batch_norm: bool = True, 
             v = int(v)
             conv2d = nn.Conv2d(cur_shape[0], v, kernel_size=3, padding=1)
             if batch_norm:
-                layers += [conv2d, nn.BatchNorm2d(v, track_running_stats=running), nn.ReLU(inplace=True)]
+                layers += [conv2d, norm_dict[cfg.norm_type](v, track_running_stats=running), nn.ReLU(inplace=True)]
             else:
                 layers += [conv2d, nn.ReLU(inplace=True)] 
             cur_shape = (v, *cur_shape[1:])
@@ -141,10 +143,9 @@ class ACAIMod(GenericAAI):
         
         def function(alpha, x_z, y_z):
             res = self.autoenc.decoder((alpha * x_z + (1 - alpha) * y_z)[None])            
-            return res.flatten()
+            return res.flatten(), (res.squeeze(),)
         
-        res = self.autoenc.decoder(alpha * x_z + (1 - alpha) * y_z)
-        jacobian = torch.func.vmap(torch.func.jacfwd(function))(alpha, x_z, y_z)
+        jacobian, (res,) = torch.func.vmap(torch.func.jacfwd(function, has_aux=True))(alpha, x_z, y_z)
         # smoothness_loss = (self.cfg.smooth_lambda * jacobian.square()).mean()
         smoothness_loss = 0.
 

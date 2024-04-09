@@ -46,6 +46,7 @@ class LitModelCfg(BaseModel):
     autoenc_loss : str = 'alex'
     
     fast_gradient : bool = True
+    norm_type : str = 'batch'
 
     ##### VIS #######
     visualize_n_batches : int = 1
