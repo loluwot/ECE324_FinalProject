@@ -48,6 +48,8 @@ class LitModelCfg(BaseModel):
     fast_gradient : bool = True
     norm_type : str = 'batch'
 
+    discrim_loss : str = 'bce'
+
     ##### VIS #######
     visualize_n_batches : int = 1
     check_samples_every_n_epochs : int = 10

@@ -197,20 +197,26 @@ class AEAI(GenericAAI):
         res = self.autoenc.decoder(res_z)
 
         # ADVERSARIAL LOSS
-        adv_loss = -self.cfg.autoenc_lambda * F.logsigmoid(self.critic(res)).mean()
-        
+        if self.cfg.discrim_loss == 'bce':
+            adv_loss = -self.cfg.autoenc_lambda * F.logsigmoid(self.critic(res)).mean()
+        if self.cfg.discrim_loss == 'wasserstein':
+            adv_loss = (self.cfg.autoenc_lambda * self.critic(res)).mean()
+
         # CYCLE CONSISTENCY
         cycle_loss = self.cfg.cycle_lambda * (self.autoenc.encoder(res) - res_z).square().mean()
         loss = recon_loss + smoothness_loss + adv_loss + cycle_loss
         return (loss, {'recon':recon_loss, 'smoothness':smoothness_loss, 'adv':adv_loss, 'cycle':cycle_loss}), res, alpha, x, y
 
     def forward_critic(self, res, alpha, x, y):
-        res = self.autoenc(x, y, alpha)
         negative_samples = self.critic(res.detach()).squeeze()
         positive_samples = self.critic(torch.cat([x, y], axis=0)).squeeze()
-        predictions = torch.cat([negative_samples, positive_samples], axis=0)
-        targets = torch.cat([torch.zeros_like(negative_samples), torch.ones_like(positive_samples)], axis=0)
-        loss = F.binary_cross_entropy_with_logits(predictions, targets, pos_weight=torch.tensor([0.5]).to(x))
+        if self.cfg.discrim_loss == 'bce':
+            res = self.autoenc(x, y, alpha)
+            predictions = torch.cat([negative_samples, positive_samples], axis=0)
+            targets = torch.cat([torch.zeros_like(negative_samples), torch.ones_like(positive_samples)], axis=0)
+            loss = F.binary_cross_entropy_with_logits(predictions, targets, pos_weight=torch.tensor([0.5]).to(x))
+        if self.cfg.discrim_loss == 'wasserstein':
+            loss = positive_samples.mean() - negative_samples.mean()
         return loss, dict()
 
 
