@@ -205,14 +205,12 @@ class AEAI(GenericAAI):
         return (loss, {'recon':recon_loss, 'smoothness':smoothness_loss, 'adv':adv_loss, 'cycle':cycle_loss}), res, alpha, x, y
 
     def forward_critic(self, res, alpha, x, y):
-        # res = self.autoenc(x, y, alpha).detach()
+        res = self.autoenc(x, y, alpha)
         negative_samples = self.critic(res.detach()).squeeze()
         positive_samples = self.critic(torch.cat([x, y], axis=0)).squeeze()
         predictions = torch.cat([negative_samples, positive_samples], axis=0)
         targets = torch.cat([torch.zeros_like(negative_samples), torch.ones_like(positive_samples)], axis=0)
-
-        loss = F.binary_cross_entropy_with_logits(predictions, targets)
-        # loss_2 = F.binary_cross_entropy_with_logits((pred := self.critic(torch.cat([x, y], axis=0))), torch.ones_like(pred))
+        loss = F.binary_cross_entropy_with_logits(predictions, targets, pos_weight=torch.tensor([0.5]).to(x))
         return loss, dict()
 
 
