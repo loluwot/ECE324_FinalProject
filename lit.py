@@ -22,6 +22,9 @@ class LitModelCfg(BaseModel):
     ##### TRAINING PARAMS
 
     optimizer : str = "adam"
+    autoenc_optimizer : Optional[str] = None
+    critic_optimizer : Optional[str] = None 
+
     lr_autoenc : float = 1e-4
     lr_critic : float = 1e-4
 
@@ -71,8 +74,8 @@ class LitModel(pl.LightningModule):
     def configure_optimizers(self):
         cfg = self.config
         cuda = torch.cuda.is_available()
-        autoenc_opt = optimizer_dict[cfg.optimizer](self.model.autoenc.parameters(), lr=cfg.lr_autoenc)#, fused=cuda)
-        critic_opt = optimizer_dict[cfg.optimizer](self.model.critic.parameters(), lr=cfg.lr_critic)#, fused=cuda)
+        autoenc_opt = optimizer_dict[cfg.autoenc_optimizer | cfg.optimizer](self.model.autoenc.parameters(), lr=cfg.lr_autoenc)#, fused=cuda)
+        critic_opt = optimizer_dict[cfg.critic_optimizer | cfg.optimizer](self.model.critic.parameters(), lr=cfg.lr_critic)#, fused=cuda)
         return autoenc_opt, critic_opt
     
     def training_step(self, batch, batch_idx):
