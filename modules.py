@@ -212,6 +212,9 @@ class AEAI(GenericAAI):
         res.requires_grad_()
         negative_samples = self.critic(res).squeeze()
         positive_samples = self.critic(torch.cat([x, y], axis=0)).squeeze()
+
+        loss_components = dict()
+
         if self.cfg.discrim_loss == 'bce':
             predictions = torch.cat([negative_samples, positive_samples], axis=0)
             targets = torch.cat([torch.zeros_like(negative_samples), torch.ones_like(positive_samples)], axis=0)
@@ -223,7 +226,9 @@ class AEAI(GenericAAI):
                                             grad_outputs=torch.ones_like(negative_samples), 
                                             create_graph=True,
                                             retain_graph=True)[0]
-            loss += self.cfg.wlambda * (gradients.view(res.shape[0], -1).norm(2, dim=1) - 1).square().mean()
-        return loss, dict()
+            gp = self.cfg.wlambda * (gradients.view(res.shape[0], -1).norm(2, dim=1) - 1).square().mean()
+            loss_components['gradient_penalty'] = gp
+            loss += gp
+        return loss, loss_components
 
 
