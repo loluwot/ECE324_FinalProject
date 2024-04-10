@@ -206,7 +206,7 @@ class AEAI(GenericAAI):
 
     def forward_critic(self, res, alpha, x, y):
         # res = self.autoenc(x, y, alpha).detach()
-        negative_samples = self.critic(res).squeeze()
+        negative_samples = self.critic(res.detach()).squeeze()
         positive_samples = self.critic(torch.cat([x, y], axis=0)).squeeze()
         predictions = torch.cat([negative_samples, positive_samples], axis=0)
         targets = torch.cat([torch.zeros_like(negative_samples), torch.ones_like(positive_samples)], axis=0)
