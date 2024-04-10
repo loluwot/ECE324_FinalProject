@@ -8,7 +8,7 @@ from pydantic import BaseModel
 
 from modules import ACAI, AEAI, ACAIMod
 
-from typing import List, Union
+from typing import List, Union, Optional
 from torchvision.utils import make_grid
 from datamodule import unnormalize
 
@@ -49,7 +49,7 @@ class LitModelCfg(BaseModel):
     norm_type : str = 'batch'
 
     discrim_loss : str = 'bce'
-    wclamp : float = 1000
+    wclamp : Optional[float] = None
 
     ##### VIS #######
     visualize_n_batches : int = 1
@@ -91,9 +91,9 @@ class LitModel(pl.LightningModule):
         if self.full_config['gradient_clipping']:
             self.clip_gradients(c_opt, gradient_clip_val=self.full_config['gradient_clipping'], gradient_clip_algorithm="norm")
         c_opt.step()
-
-        for p in self.model.critic.parameters():
-            p.data.clamp_(-self.config.wclamp, self.config.wclamp)
+        if self.config.wclamp != None:
+            for p in self.model.critic.parameters():
+                p.data.clamp_(-self.config.wclamp, self.config.wclamp)
 
         self.log_dict({"autoenc_loss": loss, "critic_loss": c_loss}, prog_bar=True)
         if len(loss_components):
