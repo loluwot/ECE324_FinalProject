@@ -53,6 +53,7 @@ class LitModelCfg(BaseModel):
 
     discrim_loss : str = 'bce'
     wclamp : Optional[float] = None
+    wlambda : float = 0.
 
     ##### VIS #######
     visualize_n_batches : int = 1
@@ -95,15 +96,15 @@ class LitModel(pl.LightningModule):
             self.clip_gradients(c_opt, gradient_clip_val=self.full_config['gradient_clipping'], gradient_clip_algorithm="norm")
         c_opt.step()
         if self.config.wclamp != None:
-            for name, p in self.model.critic.named_parameters():
-                *attrs, name = name.split(".")
-                # Get parent module
-                parent = self.model.critic
-                for k in attrs:
-                    parent = getattr(parent, k)
-                WD_BLACKLIST = (nn.Embedding, nn.LayerNorm, nn.GroupNorm, nn.BatchNorm2d)
-                if not (isinstance(parent, WD_BLACKLIST) or (name == "bias")):
-                   p.data.clamp_(-self.config.wclamp, self.config.wclamp)
+            for p in self.model.critic.parameters():
+                # *attrs, name = name.split(".")
+                # # Get parent module
+                # parent = self.model.critic
+                # for k in attrs:
+                #     parent = getattr(parent, k)
+                # WD_BLACKLIST = (nn.Embedding, nn.LayerNorm, nn.GroupNorm, nn.BatchNorm2d)
+                # if not (isinstance(parent, WD_BLACKLIST) or (name == "bias")):
+                p.data.clamp_(-self.config.wclamp, self.config.wclamp)
 
         self.log_dict({"autoenc_loss": loss, "critic_loss": c_loss}, prog_bar=True)
         if len(loss_components):
