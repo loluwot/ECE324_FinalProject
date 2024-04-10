@@ -87,6 +87,8 @@ class LitModel(pl.LightningModule):
         c_loss, c_loss_components = self.model.forward_critic(*args)
         c_opt.zero_grad()
         self.manual_backward(c_loss)
+        if self.full_config['gradient_clipping']:
+            self.clip_gradients(c_opt, gradient_clip_val=self.full_config['gradient_clipping'], gradient_clip_algorithm="norm")
         c_opt.step()
 
         self.log_dict({"autoenc_loss": loss, "critic_loss": c_loss}, prog_bar=True)
