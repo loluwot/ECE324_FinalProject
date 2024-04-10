@@ -15,7 +15,7 @@ from datamodule import unnormalize
 import wandb
 
 model_dict = {'acai': ACAI, 'aeai': AEAI, 'acai_mod': ACAIMod}
-optimizer_dict = {'adam': torch.optim.Adam, 'radam': torch.optim.RAdam}
+optimizer_dict = {'adam': torch.optim.Adam, 'radam': torch.optim.RAdam, 'rmsprop': torch.optim.RMSProp}
 
 class LitModelCfg(BaseModel):
     
@@ -49,6 +49,7 @@ class LitModelCfg(BaseModel):
     norm_type : str = 'batch'
 
     discrim_loss : str = 'bce'
+    wclamp : float = 1000
 
     ##### VIS #######
     visualize_n_batches : int = 1
@@ -90,6 +91,9 @@ class LitModel(pl.LightningModule):
         if self.full_config['gradient_clipping']:
             self.clip_gradients(c_opt, gradient_clip_val=self.full_config['gradient_clipping'], gradient_clip_algorithm="norm")
         c_opt.step()
+
+        for p in self.model.critic.parameters():
+            p.data.clamp_(-self.config.wclamp, self.config.wclamp)
 
         self.log_dict({"autoenc_loss": loss, "critic_loss": c_loss}, prog_bar=True)
         if len(loss_components):
