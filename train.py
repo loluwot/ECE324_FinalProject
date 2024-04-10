@@ -162,7 +162,7 @@ def train(cfg):
         enable_progress_bar=cfg.progress_bar,
         num_sanity_val_steps=0,
         use_distributed_sampler=False,  # already handled in DataModule!
-        gradient_clip_val=cfg.gradient_clipping,
+        # gradient_clip_val=cfg.gradient_clipping,
         limit_train_batches = cfg.debug_num if cfg.debug_single else None,
         limit_val_batches = 0,
         accumulate_grad_batches=cfg.accumulate_grad_batches,
