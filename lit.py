@@ -15,7 +15,7 @@ from datamodule import unnormalize
 import wandb
 
 model_dict = {'acai': ACAI, 'aeai': AEAI, 'acai_mod': ACAIMod}
-optimizer_dict = {'adam': torch.optim.Adam, 'radam': torch.optim.RAdam, 'rmsprop': torch.optim.RMSProp}
+optimizer_dict = {'adam': torch.optim.Adam, 'radam': torch.optim.RAdam, 'rmsprop': torch.optim.RMSprop}
 
 class LitModelCfg(BaseModel):
     
