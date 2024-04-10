@@ -209,6 +209,7 @@ class AEAI(GenericAAI):
 
     def forward_critic(self, res, alpha, x, y):
         res = res.detach()
+        res.requires_grad_()
         negative_samples = self.critic(res).squeeze()
         positive_samples = self.critic(torch.cat([x, y], axis=0)).squeeze()
         if self.cfg.discrim_loss == 'bce':
@@ -217,7 +218,6 @@ class AEAI(GenericAAI):
             loss = F.binary_cross_entropy_with_logits(predictions, targets, pos_weight=torch.tensor([0.5]).to(x))
         if self.cfg.discrim_loss == 'wasserstein':
             loss = positive_samples.mean() - negative_samples.mean()
-            print(negative_samples.requires_grad)
             gradients = torch.autograd.grad(outputs=negative_samples, 
                                             inputs=res, 
                                             grad_outputs=torch.ones_like(negative_samples), 
