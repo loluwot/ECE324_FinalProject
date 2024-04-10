@@ -53,7 +53,7 @@ class LitModelCfg(BaseModel):
 
     discrim_loss : str = 'bce'
     wclamp : Optional[float] = None
-    wlambda : float = 0.
+    wlambda : Optional[float] = None
 
     ##### VIS #######
     visualize_n_batches : int = 1
