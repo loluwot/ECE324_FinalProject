@@ -217,7 +217,12 @@ class AEAI(GenericAAI):
             loss = F.binary_cross_entropy_with_logits(predictions, targets, pos_weight=torch.tensor([0.5]).to(x))
         if self.cfg.discrim_loss == 'wasserstein':
             loss = positive_samples.mean() - negative_samples.mean()
-            gradients = torch.autograd.grad(outputs=negative_samples, inputs=res, grad_outputs=torch.ones_like(negative_samples), create_graph=True)[0]
+            print(negative_samples.requires_grad)
+            gradients = torch.autograd.grad(outputs=negative_samples, 
+                                            inputs=res, 
+                                            grad_outputs=torch.ones_like(negative_samples), 
+                                            create_graph=True,
+                                            retain_graph=True)[0]
             loss += self.cfg.wlambda * (gradients.view(res.shape[0], -1).norm(2, dim=1) - 1).square().mean()
         return loss, dict()
 
