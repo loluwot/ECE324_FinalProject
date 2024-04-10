@@ -208,16 +208,16 @@ class AEAI(GenericAAI):
         return (loss, {'recon':recon_loss, 'smoothness':smoothness_loss, 'adv':adv_loss, 'cycle':cycle_loss}), res, alpha, x, y
 
     def forward_critic(self, res, alpha, x, y):
-        negative_samples = self.critic(res.detach()).squeeze()
+        res = res.detach()
+        negative_samples = self.critic(res).squeeze()
         positive_samples = self.critic(torch.cat([x, y], axis=0)).squeeze()
         if self.cfg.discrim_loss == 'bce':
-            res = self.autoenc(x, y, alpha)
             predictions = torch.cat([negative_samples, positive_samples], axis=0)
             targets = torch.cat([torch.zeros_like(negative_samples), torch.ones_like(positive_samples)], axis=0)
             loss = F.binary_cross_entropy_with_logits(predictions, targets, pos_weight=torch.tensor([0.5]).to(x))
         if self.cfg.discrim_loss == 'wasserstein':
             loss = positive_samples.mean() - negative_samples.mean()
-            gradients = torch.autograd.grad(outputs=negative_samples, inputs=res.detach(), grad_outputs=torch.ones_like(negative_samples), create_graph=True)[0]
+            gradients = torch.autograd.grad(outputs=negative_samples, inputs=res, grad_outputs=torch.ones_like(negative_samples), create_graph=True)[0]
             loss += self.cfg.wlambda * (gradients.view(res.shape[0], -1).norm(2, dim=1) - 1).square().mean()
         return loss, dict()
 
