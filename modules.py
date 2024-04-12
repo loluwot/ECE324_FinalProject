@@ -169,30 +169,12 @@ class AEAI(GenericAAI):
 
     def forward_autoenc(self, x, y):
         bs = x.shape[0]
-        # M = self.cfg.M
-        # alpha = ((torch.arange(M + 1) / M) * torch.ones((bs, 1)))[(Ellipsis,) + (None,)*3].to(x) # B M 1 1 1
         alpha = torch.rand(bs).to(x) # B
 
         # RECON LOSS
         autoenc_y = self.autoenc.decoder(self.autoenc.encoder(y))
         autoenc_x = self.autoenc.decoder(self.autoenc.encoder(x))
         recon_loss = reduce(lambda x, y: x + y, [self.autoenc_criterion(*[self.autoenc_unnorm(z) for z in tup]).mean() for tup in zip([autoenc_y, autoenc_x], [y, x])])        
-        # SMOOTHNESS
-        # if self.cfg.fast_gradient:
-        #     loss += self.cfg.smooth_lambda * torch.gradient(rearrange(res, '(b m) c h w -> b m c h w', m=M+1), spacing=(alpha[0].squeeze(),), dim=1)[0].square().mean()
-        # else:
-            ## SLOW BUT ACCURATE GRADIENT CALC ###
-        # def function(alpha, x, y):
-        #     res_z = self.autoenc.encoder_alpha(x[None], y[None], alpha[None])#.squeeze()
-        #     res = self.autoenc.decoder(res_z)            
-        #     return res.flatten(), (res.squeeze(), res_z.squeeze())
-        
-        # # x_exp, y_exp = [xx.repeat_interleave((M + 1), dim=0) for xx in (x, y)]
-        # jacobian, (res, res_z) = torch.func.vmap(torch.func.jacfwd(function, has_aux=True))(alpha, x, y)
-        # # # print(torch.gradient(rearrange(res_merged, '(b m) c h w -> b m c h w', m=M+1), spacing=(alpha[0].squeeze(),), dim=1)[0].shape)
-        # # # print(jacobian - torch.gradient(rearrange(res_merged, '(b m) c h w -> b m c h w', m=M+1), spacing=(alpha[0].squeeze(),), dim=1)[0])
-        # smoothness_loss = (self.cfg.smooth_lambda * jacobian.square()).mean()
-        smoothness_loss = 0.
         res_z = self.autoenc.encoder_alpha(x, y, alpha) # B C H W
         res = self.autoenc.decoder(res_z)
 
@@ -205,7 +187,7 @@ class AEAI(GenericAAI):
         # CYCLE CONSISTENCY
         cycle_loss = self.cfg.cycle_lambda * (self.autoenc.encoder(res) - res_z).square().mean()
         loss = recon_loss + smoothness_loss + adv_loss + cycle_loss
-        return (loss, {'recon':recon_loss, 'smoothness':smoothness_loss, 'adv':adv_loss, 'cycle':cycle_loss}), res, alpha, x, y
+        return (loss, {'recon':recon_loss, 'adv':adv_loss, 'cycle':cycle_loss}), res, alpha, x, y
 
     def forward_critic(self, res, alpha, x, y):
         res = res.detach()

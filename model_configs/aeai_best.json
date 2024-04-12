@@ -18,15 +18,15 @@
         "M",
         256
     ],
-    "autoenc_lambda": 0.0015439390779927022,
-    "cycle_lambda": 0.037288185956576465,
+    "autoenc_lambda": 1e-2,
+    "cycle_lambda": 3e-2,
     "smooth_lambda": 1e-1,
     "autoenc_loss": "alex",
     "architecture": "aeai",
     "batch_size": 32,
     "check_samples_every_n_epochs": 5,
     "checkpoint": true,
-    "checkpoint_dir": "checkpoints/aeai_l2_5",
+    "checkpoint_dir": "checkpoints/aeai_best_new",
     "checkpoint_every_n_epochs": 10,
     "checkpoint_every_n_min": 10,
     "critic": [
@@ -56,8 +56,8 @@
     "gradient_clipping": 0,
     "im_size": 128,
     "log_every_n_steps": 10,
-    "lr_autoenc": 0.0019120477613507488,
-    "lr_critic": 0.00007530998096401402,
+    "lr_autoenc": 2e-4,
+    "lr_critic": 1e-5,
     "max_epochs": 2000,
     "normalize": true,
     "num_nodes": 1,
@@ -76,5 +76,6 @@
     "wandb_run_name": null,
     "auto_batch_size": false,
     "optimizer": "radam",
-    "fast_gradient": true
+    "fast_gradient": true,
+    "wclamp": null
 }
