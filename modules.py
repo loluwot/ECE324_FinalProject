@@ -186,7 +186,7 @@ class AEAI(GenericAAI):
 
         # CYCLE CONSISTENCY
         cycle_loss = self.cfg.cycle_lambda * (self.autoenc.encoder(res) - res_z).square().mean()
-        loss = recon_loss + smoothness_loss + adv_loss + cycle_loss
+        loss = recon_loss + adv_loss + cycle_loss
         return (loss, {'recon':recon_loss, 'adv':adv_loss, 'cycle':cycle_loss}), res, alpha, x, y
 
     def forward_critic(self, res, alpha, x, y):
