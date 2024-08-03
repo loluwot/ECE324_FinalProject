@@ -1,5 +1,0 @@
-- figure out how to use wandb hyperparameter sweep
-- add modular losses (recon, adv, smooth, cycle) to hyperparameters
-- find alternatives to batchnorm2d? 
-  -  instance norm?
--  
