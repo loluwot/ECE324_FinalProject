@@ -1,3 +1,6 @@
 __pycache__
 afhq
 *.zip
+.lh
+*.ipynb
+*.ckpt

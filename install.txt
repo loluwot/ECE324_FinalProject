@@ -1,1 +1,1 @@
-pip install numpy matplotlib zarr xarray ipykernel gcsfs fsspec dask cartopy torchinfo wandb pydantic-cli lightning fastparquet pyarrow s3fs einops axial_attention perceiver-pytorch pydantic-yaml
+pip install numpy matplotlib wandb pydantic-cli lightning einops lpips opencv-python pyyaml
